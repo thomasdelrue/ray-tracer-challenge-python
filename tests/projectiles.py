@@ -1,4 +1,4 @@
-from tuples import Point, Vector
+from raytracer.tuples import Point, Vector
 
 
 class Projectile:

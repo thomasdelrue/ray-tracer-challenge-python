@@ -1,5 +1,5 @@
 from math import sqrt
-from tuples import Tuple, TupleType, Point, Vector, dot, cross, Color
+from raytracer.tuples import Tuple, TupleType, Point, Vector, dot, cross, Color
 
 
 class TestTuples:

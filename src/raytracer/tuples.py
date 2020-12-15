@@ -1,9 +1,8 @@
 from __future__ import annotations
 from enum import Enum
 from math import sqrt
+from raytracer import EPSILON
 from typing import NamedTuple
-
-EPSILON = 0.00001
 
 
 class TupleType(Enum):
@@ -104,7 +103,7 @@ class Color(NamedTuple):
             return Color(self.red * other, self.green * other, self.blue * other)
         if isinstance(other, Color):
             return hadamard_product(self, other)
-        raise NotImplementedError
+        raise TypeError(f'Color cannot be multiplied by {type(other)}')
 
     def __rmul__(self, other):
         return self * other

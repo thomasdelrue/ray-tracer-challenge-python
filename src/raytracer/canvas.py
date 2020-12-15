@@ -1,4 +1,4 @@
-from tuples import Color
+from raytracer.tuples import Color
 from typing import List
 
 
@@ -14,7 +14,7 @@ class Canvas:
     def pixel_at(self, x: int, y: int) -> Color:
         return self._pixels[x][y]
 
-    def to_ppm(self):
+    def to_ppm(self) -> List[str]:
         max_color_value: int = 255
         ppm_header = ['P3\n', f'{self.width} {self.height}\n', f'{max_color_value}\n']
         pixel_data = []

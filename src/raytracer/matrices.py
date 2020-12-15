@@ -1,5 +1,6 @@
 from __future__ import annotations
-from tuples import Tuple, dot
+from raytracer import EPSILON
+from raytracer.tuples import Tuple, dot
 from typing import List
 
 
@@ -8,10 +9,10 @@ class Matrix:
         self.values = values if values is not None else [[0, 0, 0, 0] for _ in range(4)]
 
     @property
-    def shape(self):
+    def size(self):
         rows = len(self.values)
         cols = max([len(col) for col in self.values])
-        return max(rows, cols), max(rows, cols)
+        return max(rows, cols)
 
     def __getitem__(self, key):
         if not isinstance(key, tuple) and len(key) != 2 and not isinstance(key[0], int) and not isinstance(key[1], int):
@@ -24,7 +25,13 @@ class Matrix:
         self.values[key[0]][key[1]] = value
 
     def __eq__(self, other):
-        return self.values == other.values
+        if self.size != other.size:
+            return False
+        for row in range(self.size):
+            for col in range(self.size):
+                if abs(self[row, col] - other[row, col]) >= EPSILON:
+                    return False
+        return True
 
     def __mul__(self, other):
         if isinstance(other, Matrix):
@@ -50,14 +57,62 @@ class Matrix:
             products.append(result)
         return Tuple(*products)
 
+    def row(self, row_nr):
+        return self.values[row_nr]
+
+    def col(self, col_nr):
+        return [r[col_nr] for r in self.values]
+
+    def transpose(self) -> Matrix:
+        m = Matrix()
+        size = self.size
+        for row in range(size):
+            for col in range(size):
+                m[row, col] = self[col, row]
+        return m
+
+    def determinant(self) -> float:
+        if self.size == 2:
+            return self[0, 0] * self[1, 1] - self[0, 1] * self[1, 0]
+        else:
+            products = [el * self.cofactor(0, col) for col, el in enumerate(self.values[0])]
+            return sum(products)
+
+    def submatrix(self, row, col):
+        values = [r[:col] + r[col + 1:] for i, r in enumerate(self.values) if i != row]
+        return Matrix(values)
+
+    def minor(self, row, col):
+        return self.submatrix(row, col).determinant()
+
+    def cofactor(self, row, col):
+        if (row + col) % 2:
+            return -self.minor(row, col)
+        else:
+            return self.minor(row, col)
+
+    @property
+    def invertible(self) -> bool:
+        return self.determinant() != 0
+
+    def inverse(self):
+        if not self.invertible:
+            raise ValueError('matrix is invertible')
+        inverted = Matrix([[0] * self.size for _ in range(self.size)])
+        det = self.determinant()
+        for row in range(self.size):
+            for col in range(self.size):
+                cf = self.cofactor(row, col)
+                inverted[col, row] = cf / det
+        return inverted
+
     def __str__(self):
         return '[' + '\n '.join([str(row) for row in self.values]) + ']'
+
+    __repr__ = __str__
 
 
 Matrix.identity = Matrix([[1, 0, 0, 0],
                           [0, 1, 0, 0],
                           [0, 0, 1, 0],
                           [0, 0, 0, 1]])
-
-
-

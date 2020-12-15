@@ -1,6 +1,6 @@
 from os import sep
-from canvas import Canvas, write_ppm_to_file
-from tuples import Point, Vector, Color
+from raytracer.canvas import Canvas, write_ppm_to_file
+from raytracer.tuples import Point, Vector, Color
 from tests.projectiles import Projectile, Environment, tick
 
 

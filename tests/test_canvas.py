@@ -1,5 +1,5 @@
-from tuples import Color
-from canvas import Canvas
+from raytracer.tuples import Color
+from raytracer.canvas import Canvas
 
 
 class TestCanvas:
