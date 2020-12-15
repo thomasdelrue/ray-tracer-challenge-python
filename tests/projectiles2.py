@@ -1,7 +1,7 @@
 from os import sep
 from canvas import Canvas, write_ppm_to_file
 from tuples import Point, Vector, Color
-from projectiles import Projectile, Environment, tick
+from tests.projectiles import Projectile, Environment, tick
 
 
 def plot_point_on_canvas(p: Point, c: Canvas):

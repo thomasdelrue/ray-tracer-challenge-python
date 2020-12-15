@@ -32,7 +32,7 @@ class Tuple(NamedTuple):
 
     def __mul__(self, other):
         if not isinstance(other, (int, float)):
-            raise NotImplementedError
+            raise TypeError(f'multiplying a tuple by {type(other)} not supported')
         return self._scalar(other)
 
     def __rmul__(self, other):
@@ -43,7 +43,7 @@ class Tuple(NamedTuple):
 
     def __truediv__(self, other):
         if not isinstance(other, (int, float)):
-            raise NotImplementedError
+            raise TypeError(f'Dividing a tuple by {type(other)} not supported')
         if other == 0:
             raise ZeroDivisionError
         scalar = 1.0 / other
