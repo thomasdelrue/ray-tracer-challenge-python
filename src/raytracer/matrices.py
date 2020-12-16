@@ -1,6 +1,7 @@
 from __future__ import annotations
+from math import cos, sin
 from raytracer import EPSILON
-from raytracer.tuples import Tuple, dot
+from .tuples import Tuple, dot
 from typing import List
 
 
@@ -106,13 +107,93 @@ class Matrix:
                 inverted[col, row] = cf / det
         return inverted
 
+    def copy(self):
+        copy_values = [row[:] for row in self.values]
+        return Matrix(copy_values)
+
+    @staticmethod
+    def identity():
+        return Matrix([[1, 0, 0, 0],
+                       [0, 1, 0, 0],
+                       [0, 0, 1, 0],
+                       [0, 0, 0, 1]])
+
+    def translate(self, x, y, z):
+        return Matrix([[1, 0, 0, x],
+                       [0, 1, 0, y],
+                       [0, 0, 1, z],
+                       [0, 0, 0, 1]]) * self
+
+    def scale(self, x, y, z):
+        return scaling(x, y, z) * self
+
+    def rotate_x(self, radians: float):
+        return rotation_x(radians) * self
+
+    def rotate_y(self, radians: float):
+        return rotation_y(radians) * self
+
+    def rotate_z(self, radians: float):
+        return rotation_z(radians) * self
+
+    def shear(self, x2y, x2z, y2x, y2z, z2x, z2y):
+        return shearing(x2y, x2z, y2x, y2z, z2x, z2y) * self
+
     def __str__(self):
         return '[' + '\n '.join([str(row) for row in self.values]) + ']'
 
     __repr__ = __str__
 
 
-Matrix.identity = Matrix([[1, 0, 0, 0],
-                          [0, 1, 0, 0],
-                          [0, 0, 1, 0],
-                          [0, 0, 0, 1]])
+def translation(x, y, z) -> Matrix:
+    tr = Matrix.identity()
+    tr[0, 3] = x
+    tr[1, 3] = y
+    tr[2, 3] = z
+    return tr
+
+
+def scaling(x, y, z) -> Matrix:
+    sc = Matrix.identity()
+    sc[0, 0] = x
+    sc[1, 1] = y
+    sc[2, 2] = z
+    return sc
+
+
+def rotation_x(radians: float) -> Matrix:
+    rot = Matrix.identity()
+    rot[1, 1] = cos(radians)
+    rot[1, 2] = -sin(radians)
+    rot[2, 1] = sin(radians)
+    rot[2, 2] = cos(radians)
+    return rot
+
+
+def rotation_y(radians: float) -> Matrix:
+    rot = Matrix.identity()
+    rot[0, 0] = cos(radians)
+    rot[0, 2] = sin(radians)
+    rot[2, 0] = -sin(radians)
+    rot[2, 2] = cos(radians)
+    return rot
+
+
+def rotation_z(radians: float) -> Matrix:
+    rot = Matrix.identity()
+    rot[0, 0] = cos(radians)
+    rot[0, 1] = -sin(radians)
+    rot[1, 0] = sin(radians)
+    rot[1, 1] = cos(radians)
+    return rot
+
+
+def shearing(x2y, x2z, y2x, y2z, z2x, z2y):
+    rot = Matrix.identity()
+    rot[0, 1] = x2y
+    rot[0, 2] = x2z
+    rot[1, 0] = y2x
+    rot[1, 2] = y2z
+    rot[2, 0] = z2x
+    rot[2, 1] = z2y
+    return rot

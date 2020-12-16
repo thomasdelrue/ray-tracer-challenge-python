@@ -80,11 +80,11 @@ class TestMatrices:
                     [1, 2, 4, 8],
                     [2, 4, 8, 16],
                     [4, 8, 16, 32]])
-        assert a * Matrix.identity == a
+        assert a * Matrix.identity() == a
 
     def test_multiply_identity_matrix_by_tuple(self):
         a = Tuple(1, 2, 3, 4)
-        assert Matrix.identity * a == a
+        assert Matrix.identity() * a == a
 
     def test_transpose_matrix(self):
         a = Matrix([[0, 9, 3, 0],
@@ -97,8 +97,8 @@ class TestMatrices:
                                         [0, 8, 3, 8]])
 
     def test_transpose_identity_matrix(self):
-        a = Matrix.identity.transpose()
-        assert a == Matrix.identity
+        a = Matrix.identity().transpose()
+        assert a == Matrix.identity()
 
     def test_determinant_2x2_matrix(self):
         a = Matrix([[1, 5],

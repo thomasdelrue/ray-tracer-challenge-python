@@ -6,7 +6,7 @@ from tests.projectiles import Projectile, Environment, tick
 
 def plot_point_on_canvas(p: Point, c: Canvas):
     x, y = int(p.x), c.height - int(p.y)
-    if 0 <= x <= c.width and 0 <= y <= c.height:
+    if 0 <= x < c.width and 0 <= y < c.height:
         c.write_pixel(x, y, Color(1, 0, 0))
 
 
