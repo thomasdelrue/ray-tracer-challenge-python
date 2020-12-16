@@ -21,13 +21,24 @@ class Tuple(NamedTuple):
         return TupleType(self.w).name
 
     def __add__(self, other):
-        return Tuple(self.x + other.x, self.y + other.y, self.z + other.z, self.w + other.w)
+        x, y, z, w = self.x + other.x, self.y + other.y, self.z + other.z, self.w + other.w
+        return Tuple._create(x, y, z, w)
 
     def __sub__(self, other):
-        return Tuple(self.x - other.x, self.y - other.y, self.z - other.z, self.w - other.w)
+        x, y, z, w = self.x - other.x, self.y - other.y, self.z - other.z, self.w - other.w
+        return Tuple._create(x, y, z, w)
 
     def __neg__(self):
         return Tuple(-self.x, -self.y, -self.z, -self.w)
+
+    @staticmethod
+    def _create(x, y, z, w):
+        if w == 1:
+            return Point(x, y, z)
+        elif w == 0:
+            return Vector(x, y, z)
+        else:
+            return Tuple(x, y, z, w)
 
     def __mul__(self, other):
         if not isinstance(other, (int, float)):

@@ -1,7 +1,7 @@
 from os import sep
 from raytracer.canvas import Canvas, write_ppm_to_file
 from raytracer.tuples import Point, Vector, Color
-from tests.projectiles import Projectile, Environment, tick
+from tests.showcase.projectiles import Projectile, Environment, tick
 
 
 def plot_point_on_canvas(p: Point, c: Canvas):
@@ -22,4 +22,4 @@ if __name__ == '__main__':
         proj = tick(env, proj)
         plot_point_on_canvas(proj.position, canvas)
 
-    write_ppm_to_file(canvas.to_ppm(), f'..{sep}resources{sep}proj2.ppm')
+    write_ppm_to_file(canvas.to_ppm(), f'..{sep}..{sep}resources{sep}proj2.ppm')

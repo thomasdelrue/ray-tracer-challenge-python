@@ -30,4 +30,4 @@ if __name__ == '__main__':
 
     plot_points_on_canvas(points, canvas)
 
-    write_ppm_to_file(canvas.to_ppm(), f'..{sep}resources{sep}clock.ppm')
+    write_ppm_to_file(canvas.to_ppm(), f'..{sep}..{sep}resources{sep}clock.ppm')
