@@ -1,4 +1,6 @@
-from raytracer.matrices import Matrix, translation, scaling
+from math import sqrt, pi
+from raytracer.materials import Material
+from raytracer.matrices import Matrix, translation, scaling, rotation_z
 from raytracer.rays import Ray
 from raytracer.spheres import Sphere
 from raytracer.tuples import Vector, Point
@@ -76,3 +78,53 @@ class TestSpheres:
         s.transformation = translation(5, 0, 0)
         xs = s.intersect(r)
         assert xs.count == 0
+
+    def test_normal_sphere_at_point_on_x_axis(self):
+        s = Sphere()
+        n = s.normal_at(Point(1, 0, 0))
+        assert n == Vector(1, 0, 0)
+
+    def test_normal_sphere_at_point_on_y_axis(self):
+        s = Sphere()
+        n = s.normal_at(Point(0, 1, 0))
+        assert n == Vector(0, 1, 0)
+
+    def test_normal_sphere_at_point_on_z_axis(self):
+        s = Sphere()
+        n = s.normal_at(Point(0, 0, 1))
+        assert n == Vector(0, 0, 1)
+
+    def test_normal_sphere_at_nonaxial_point(self):
+        s = Sphere()
+        n = s.normal_at(Point(sqrt(3) / 3, sqrt(3) / 3, sqrt(3) / 3))
+        assert n == Vector(sqrt(3) / 3, sqrt(3) / 3, sqrt(3) / 3)
+
+    def test_normal_is_normalized_vector(self):
+        s = Sphere()
+        n = s.normal_at(Point(sqrt(3) / 3, sqrt(3) / 3, sqrt(3) / 3))
+        assert n == n.normalize()
+
+    def test_compute_normal_on_translated_sphere(self):
+        s = Sphere()
+        s.transformation = translation(0, 1, 0)
+        n = s.normal_at(Point(0, 1.70711, -0.70711))
+        assert n == Vector(0, 0.70711, -0.70711)
+
+    def test_compute_normal_on_transformed_sphere(self):
+        s = Sphere()
+        s.transformation = scaling(1, 0.5, 1) * rotation_z(pi / 5)
+        n = s.normal_at(Point(0, sqrt(2) / 2, -sqrt(2) / 2))
+        assert n == Vector(0, 0.97014, -0.24254)
+
+    def test_sphere_has_default_material(self):
+        s = Sphere()
+        assert s.material == Material()
+
+    def test_sphere_may_have_material_assigned(self):
+        s = Sphere()
+        m = Material()
+        m.ambient = 1
+        s.material = m
+        assert s.material == m
+
+

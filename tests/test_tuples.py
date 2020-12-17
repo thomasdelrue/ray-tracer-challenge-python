@@ -145,3 +145,16 @@ class TestTuples:
         c2 = Color(0.9, 1, 0.1)
         assert c1 * c2 == Color(0.9, 0.2, 0.04)
 
+    def test_reflect_vector_at_45(self):
+        v = Vector(1, -1, 0)
+        n = Vector(0, 1, 0)
+        r = v.reflect(n)
+        assert r == Vector(1, 1, 0)
+
+    def test_reflect_vector_at_slanted_surface(self):
+        v = Vector(0, -1, 0)
+        n = Vector(sqrt(2) / 2, sqrt(2) / 2, 0)
+        r = v.reflect(n)
+        assert r == Vector(1, 0, 0)
+
+

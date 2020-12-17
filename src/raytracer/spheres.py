@@ -1,4 +1,5 @@
 from .intersections import Intersection, Intersections
+from .materials import Material
 from .matrices import Matrix
 from .rays import Ray
 from .tuples import Point, Vector, dot
@@ -8,10 +9,11 @@ import math
 class Sphere:
     def __init__(self):
         self.origin = Point(0, 0, 0)
-        self._transformation = Matrix.identity()
+        self.transformation = Matrix.identity()
+        self.material = Material()
 
     def intersect(self, ray: Ray):
-        tr_ray = ray.transform(self._transformation.inverse())
+        tr_ray = ray.transform(self.transformation.inverse())
         sphere_to_ray: Vector = tr_ray.origin - self.origin
 
         a = dot(tr_ray.direction, tr_ray.direction)
@@ -26,13 +28,11 @@ class Sphere:
         t2 = (-b + math.sqrt(discriminant)) / (2 * a)
         return Intersections(Intersection(t1, self), Intersection(t2, self))
 
-    @property
-    def transformation(self):
-        return self._transformation
-
-    @transformation.setter
-    def transformation(self, value):
-        self._transformation = value
+    def normal_at(self, point: Point):
+        object_point = self.transformation.inverse() * point
+        object_normal = object_point - self.origin
+        x, y, z, _ = self.transformation.inverse().transpose() * object_normal
+        return Vector(x, y, z).normalize()
 
     def __repr__(self):
         return f'Sphere(origin={self.origin})'

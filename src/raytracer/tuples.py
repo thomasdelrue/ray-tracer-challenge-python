@@ -29,7 +29,8 @@ class Tuple(NamedTuple):
         return Tuple._create(x, y, z, w)
 
     def __neg__(self):
-        return Tuple(-self.x, -self.y, -self.z, -self.w)
+        x, y, z, w = -self.x, -self.y, -self.z, -self.w
+        return Tuple._create(x, y, z, w)
 
     @staticmethod
     def _create(x, y, z, w):
@@ -83,6 +84,9 @@ class Vector(Tuple):
         magnitude = self.magnitude
         return Vector(self.x / magnitude, self.y / magnitude, self.z / magnitude)
 
+    def reflect(self, normal: Vector) -> Vector:
+        return self - normal * 2 * dot(self, normal)
+
 
 def dot(t1: Tuple, t2: Tuple) -> float:
     return t1.x * t2.x + t1.y * t2.y + t1.z * t2.z + t1.w * t2.w
@@ -118,6 +122,10 @@ class Color(NamedTuple):
 
     def __rmul__(self, other):
         return self * other
+
+    @staticmethod
+    def black():
+        return Color(0, 0, 0)
 
 
 def hadamard_product(c1: Color, c2: Color):
