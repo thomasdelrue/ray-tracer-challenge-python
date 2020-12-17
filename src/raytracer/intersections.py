@@ -1,4 +1,23 @@
+from dataclasses import dataclass
 from typing import Optional
+from .rays import Ray
+from .tuples import Point, Vector, dot
+
+
+@dataclass
+class Computations:
+    t: float
+    object: object
+    point: Point
+    eyev: Vector
+    normalv: Vector
+
+    @property
+    def inside(self) -> bool:
+        if dot(self.normalv, self.eyev) < 0:
+            self.normalv = -self.normalv
+            return True
+        return False
 
 
 class Intersection:
@@ -6,23 +25,31 @@ class Intersection:
         self.t = t
         self.object = _object
 
+    def prepare_computations(self, ray: Ray) -> Computations:
+        point = ray.position(self.t)
+        eyev = -ray.direction
+        normalv = self.object.normal_at(point)
+        return Computations(self.t, self.object, point, eyev, normalv)
+
     def __repr__(self):
         return f'Intersection(t={self.t}, object={self.object})'
 
 
 class Intersections:
     def __init__(self, *intersections):
-        self.intersections = sorted(intersections, key=lambda intersection: intersection.t)
+        self._container = sorted(intersections, key=lambda intersection: intersection.t)
 
     @property
     def count(self):
-        return len(self.intersections)
+        return len(self._container)
 
     def __getitem__(self, item):
-        return self.intersections[item]
+        return self._container[item]
 
     def hit(self) -> Optional[Intersection]:
-        for intersect in self.intersections:
+        for intersection in self._container:
             # return the first non-negative t intersection from the ordered list
-            if intersect.t >= 0:
-                return intersect
+            if intersection.t >= 0:
+                return intersection
+
+

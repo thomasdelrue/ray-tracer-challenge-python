@@ -1,5 +1,7 @@
 from raytracer.intersections import Intersection, Intersections
+from raytracer.rays import Ray
 from raytracer.spheres import Sphere
+from raytracer.tuples import Point, Vector
 
 
 class TestIntersections:
@@ -47,3 +49,31 @@ class TestIntersections:
         i4 = Intersection(2, s)
         xs = Intersections(i1, i2, i3, i4)
         assert xs.hit() == i4
+
+    def test_precomputing_state_of_intersection(self):
+        r = Ray(Point(0, 0, -5), Vector(0, 0, 1))
+        shape = Sphere()
+        i = Intersection(4, shape)
+        comps = i.prepare_computations(r)
+        assert comps.t == i.t
+        assert comps.object == i.object
+        assert comps.point == Point(0, 0, -1)
+        assert comps.eyev == Vector(0, 0, -1)
+        assert comps.normalv == Vector(0, 0, -1)
+
+    def test_hit_when_intersection_occurs_on_outside(self):
+        r = Ray(Point(0, 0, -5), Vector(0, 0, 1))
+        shape = Sphere()
+        i = Intersection(4, shape)
+        comps = i.prepare_computations(r)
+        assert comps.inside is False
+
+    def test_hit_when_intersection_occurs_on_inside(self):
+        r = Ray(Point(0, 0, 0), Vector(0, 0, 1))
+        shape = Sphere()
+        i = Intersection(1, shape)
+        comps = i.prepare_computations(r)
+        assert comps.point == Point(0, 0, 1)
+        assert comps.eyev == Vector(0, 0, -1)
+        assert comps.inside is True
+        assert comps.normalv == Vector(0, 0, -1)

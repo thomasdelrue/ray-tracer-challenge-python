@@ -127,6 +127,10 @@ class Color(NamedTuple):
     def black():
         return Color(0, 0, 0)
 
+    @staticmethod
+    def white():
+        return Color(1, 1, 1)
+
 
 def hadamard_product(c1: Color, c2: Color):
     return Color(c1.red * c2.red, c1.green * c2.green, c1.blue * c2.blue)
