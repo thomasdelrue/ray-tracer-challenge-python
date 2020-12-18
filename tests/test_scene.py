@@ -1,3 +1,4 @@
+from raytracer.intersections import Intersection
 from raytracer.lights import PointLight
 from raytracer.matrices import scaling
 from raytracer.rays import Ray
@@ -35,3 +36,23 @@ class TestScene:
         assert xs[1].t == 4.5
         assert xs[2].t == 5.5
         assert xs[3].t == 6
+
+    def test_shading_intersection(self, default_world):
+        w = default_world
+        r = Ray(Point(0, 0, -5), Vector(0, 0, 1))
+        shape = w.objects[0]
+        i = Intersection(4, shape)
+        comps = i.prepare_computations(r)
+        c = w.shade_hit(comps)
+        assert c == Color(0.38066, 0.47583, 0.2855)
+
+    def test_shading_intersection_from_inside(self, default_world):
+        w = default_world
+        w.light = PointLight(Point(0, 0.25, 0), Color.white())
+        r = Ray(Point(0, 0, 0), Vector(0, 0, 1))
+        shape = w.objects[1]
+        i = Intersection(0.5, shape)
+        comps = i.prepare_computations(r)
+        c = w.shade_hit(comps)
+        assert c == Color(0.90498, 0.90498, 0.90498)
+

@@ -12,12 +12,12 @@ class Computations:
     eyev: Vector
     normalv: Vector
 
-    @property
-    def inside(self) -> bool:
+    def __post_init__(self):
         if dot(self.normalv, self.eyev) < 0:
             self.normalv = -self.normalv
-            return True
-        return False
+            self.inside = True
+        else:
+            self.inside = False
 
 
 class Intersection:
