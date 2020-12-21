@@ -1,4 +1,5 @@
-from raytracer.matrices import translation, scaling, rotation_x, rotation_y, rotation_z, shearing
+from raytracer.matrices import translation, scaling, rotation_x, rotation_y, rotation_z, \
+    shearing, Matrix, view_transform
 from raytracer.tuples import Point, Vector
 import math
 
@@ -118,7 +119,33 @@ class TestTransformations:
         t = c * b * a * p
         assert t == Point(15, 0, 7)
 
+    def test_view_transformation_for_default_orientation(self):
+        _from = Point(0, 0, 0)
+        to = Point(0, 0, -1)
+        up = Vector(0, 1, 0)
+        t = view_transform(_from, to, up)
+        assert t == Matrix.identity()
 
+    def test_view_transformation_looking_in_z_positive_direction(self):
+        _from = Point(0, 0, 0)
+        to = Point(0, 0, 1)
+        up = Vector(0, 1, 0)
+        t = view_transform(_from, to, up)
+        assert t == scaling(-1, 1, -1)  # reflecting across z and x
 
+    def test_view_transformation_moves_the_world(self):
+        _from = Point(0, 0, 8)
+        to = Point(0, 0, 0)
+        up = Vector(0, 1, 0)
+        t = view_transform(_from, to, up)
+        assert t == translation(0, 0, -8)
 
-
+    def test_arbitrary_view_transformation(self):
+        _from = Point(1, 3, 2)
+        to = Point(4, -2, 8)
+        up = Vector(1, 1, 0)
+        t = view_transform(_from, to, up)
+        assert t == Matrix([[-0.50709, 0.50709, 0.67612, -2.36643],
+                            [0.76772, 0.60609, 0.12122, -2.82843],
+                            [-0.35857, 0.59761, -0.71714, 0.0],
+                            [0.0, 0.0, 0.0, 1.0]])

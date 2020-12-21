@@ -56,3 +56,24 @@ class TestScene:
         c = w.shade_hit(comps)
         assert c == Color(0.90498, 0.90498, 0.90498)
 
+    def test_color_black_when_ray_misses(self, default_world):
+        w = default_world
+        r = Ray(Point(0, 0, -5), Vector(0, 1, 0))
+        c = w.color_at(r)
+        assert c == Color.black()
+
+    def test_color_when_ray_hits(self, default_world):
+        w = default_world
+        r = Ray(Point(0, 0, -5), Vector(0, 0, 1))
+        c = w.color_at(r)
+        assert c == Color(0.38066, 0.47583, 0.2855)
+
+    def test_color_with_intersection_behind_ray(self, default_world):
+        w = default_world
+        outer = w.objects[0]
+        outer.material.ambient = 1
+        inner = w.objects[1]
+        inner.material.ambient = 1
+        r = Ray(Point(0, 0, 0.75), Vector(0, 0, -1))
+        c = w.color_at(r)
+        assert c == inner.material.color

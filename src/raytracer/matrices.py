@@ -1,7 +1,7 @@
 from __future__ import annotations
 from math import cos, sin
 from raytracer import EPSILON
-from .tuples import Tuple, dot
+from .tuples import Tuple, dot, Point, Vector, cross
 from typing import List
 
 
@@ -188,7 +188,7 @@ def rotation_z(radians: float) -> Matrix:
     return rot
 
 
-def shearing(x2y, x2z, y2x, y2z, z2x, z2y):
+def shearing(x2y, x2z, y2x, y2z, z2x, z2y) -> Matrix:
     rot = Matrix.identity()
     rot[0, 1] = x2y
     rot[0, 2] = x2z
@@ -197,3 +197,15 @@ def shearing(x2y, x2z, y2x, y2z, z2x, z2y):
     rot[2, 0] = z2x
     rot[2, 1] = z2y
     return rot
+
+
+def view_transform(_from: Point, to: Point, up: Vector) -> Matrix:
+    forward = (to - _from).normalize()
+    left = cross(forward, up.normalize())
+    true_up = cross(left, forward)
+    orientation = Matrix([[left.x, left.y, left.z, 0],
+                          [true_up.x, true_up.y, true_up.z, 0],
+                          [-forward.x, -forward.y, -forward.z, 0],
+                          [0, 0, 0, 1]])
+    return orientation * translation(-_from.x, -_from.y, -_from.z)
+
