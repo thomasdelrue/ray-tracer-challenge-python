@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from typing import Optional
+from . import EPSILON
 from .rays import Ray
 from .tuples import Point, Vector, dot
 
@@ -18,6 +19,7 @@ class Computations:
             self.inside = True
         else:
             self.inside = False
+        self.over_point = self.point + self.normalv * EPSILON
 
 
 class Intersection:

@@ -1,4 +1,6 @@
+from raytracer import EPSILON
 from raytracer.intersections import Intersection, Intersections
+from raytracer.matrices import translation
 from raytracer.rays import Ray
 from raytracer.spheres import Sphere
 from raytracer.tuples import Point, Vector
@@ -77,3 +79,12 @@ class TestIntersections:
         assert comps.eyev == Vector(0, 0, -1)
         assert comps.inside is True
         assert comps.normalv == Vector(0, 0, -1)
+
+    def test_hit_should_offset_the_point(self):
+        r = Ray(Point(0, 0, -5), Vector(0, 0, 1))
+        shape = Sphere()
+        shape.transformation = translation(0, 0, 1)
+        i = Intersection(5, shape)
+        comps = i.prepare_computations(r)
+        assert comps.over_point.z < -EPSILON / 2
+        assert comps.point.z > comps.over_point.z

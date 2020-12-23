@@ -19,7 +19,7 @@ class Material:
             abs(self.specular - other.specular) < EPSILON and \
             abs(self.shininess - other.shininess) < EPSILON
 
-    def lighting(self, light: PointLight, point: Point, eyev: Vector, normalv: Vector) -> Color:
+    def lighting(self, light: PointLight, point: Point, eyev: Vector, normalv: Vector, in_shadow: bool = False) -> Color:
         # combine surface color with light's color/intensity
         effective_color = self.color * light.intensity
 
@@ -28,24 +28,27 @@ class Material:
 
         # compute ambient contribution
         ambient = effective_color * self.ambient
+        diffuse = Color.black()
+        specular = Color.black()
 
-        # light_dot_normal represents the cosine of the angle between light vector and
-        # normal vector. Negative number means light is on other side of surface
-        light_dot_normal = dot(lightv, normalv)
-        if light_dot_normal < 0:
-            diffuse = Color.black()
-            specular = Color.black()
-        else:
-            diffuse = effective_color * self.diffuse * light_dot_normal
-
-            # reflect_dot_eye represents the cosine of the angle between the reflection
-            # vector and eye vector. Negative number means light reflects away from the eye
-            reflectv = (-lightv).reflect(normalv)
-            reflect_dot_eye = dot(reflectv, eyev)
-            if reflect_dot_eye <= 0:
+        if not in_shadow:
+            # light_dot_normal represents the cosine of the angle between light vector and
+            # normal vector. Negative number means light is on other side of surface
+            light_dot_normal = dot(lightv, normalv)
+            if light_dot_normal < 0:
+                diffuse = Color.black()
                 specular = Color.black()
             else:
-                factor = math.pow(reflect_dot_eye, self.shininess)
-                specular = light.intensity * self.specular * factor
+                diffuse = effective_color * self.diffuse * light_dot_normal
+
+                # reflect_dot_eye represents the cosine of the angle between the reflection
+                # vector and eye vector. Negative number means light reflects away from the eye
+                reflectv = (-lightv).reflect(normalv)
+                reflect_dot_eye = dot(reflectv, eyev)
+                if reflect_dot_eye <= 0:
+                    specular = Color.black()
+                else:
+                    factor = math.pow(reflect_dot_eye, self.shininess)
+                    specular = light.intensity * self.specular * factor
 
         return ambient + diffuse + specular

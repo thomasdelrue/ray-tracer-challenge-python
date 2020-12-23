@@ -2,7 +2,7 @@ from math import pi
 from raytracer.camera import Camera
 from raytracer.intersections import Intersection
 from raytracer.lights import PointLight
-from raytracer.matrices import scaling, view_transform
+from raytracer.matrices import scaling, view_transform, translation
 from raytracer.rays import Ray
 from raytracer.scene import World
 from raytracer.spheres import Sphere
@@ -91,3 +91,35 @@ class TestScene:
         image = c.render(w)
         assert image.pixel_at(5, 5) == Color(0.38066, 0.47583, 0.2855)
 
+    def test_no_shadow_when_nothing_collinear_with_point_and_light(self, default_world):
+        w = default_world
+        p = Point(0, 10, 0)
+        assert w.is_shadowed(p) is False
+
+    def test_shadow_when_object_is_between_point_and_light(self, default_world):
+        w = default_world
+        p = Point(10, -10, 10)
+        assert w.is_shadowed(p) is True
+
+    def test_no_shadow_when_object_is_behind_light(self, default_world):
+        w = default_world
+        p = Point(-20, 20, -20)
+        assert w.is_shadowed(p) is False
+
+    def test_no_shadow_when_object_is_behind_point(self, default_world):
+        w = default_world
+        p = Point(-2, 2, -2)
+        assert w.is_shadowed(p) is False
+
+    def test_shade_hit_is_given_an_intersection_in_shadow(self):
+        w = World()
+        w.light_source = PointLight(Point(0, 0, -10), Color.white())
+        s1 = Sphere()
+        s2 = Sphere()
+        s2.transformation = translation(0, 0, 10)
+        w.add(s1, s2)
+        r = Ray(Point(0, 0, 5), Vector(0, 0, 1))
+        i = Intersection(4, s2)
+        comps = i.prepare_computations(r)
+        c = w.shade_hit(comps)
+        assert c == Color(0.1, 0.1, 0.1)

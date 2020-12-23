@@ -54,7 +54,7 @@ if __name__ == '__main__':
     world.add(floor, left_wall, right_wall, middle, left, right)
     world.light_source = PointLight(Point(-10, 10, -10), Color.white())
 
-    camera = Camera(100, 50, pi / 3)
+    camera = Camera(200, 100, pi / 3)
     camera.transformation = view_transform(Point(0, 1.5, -5), Point(0, 1, 0), Vector(0, 1, 0))
 
     canvas = camera.render(world)
