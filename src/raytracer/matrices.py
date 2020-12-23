@@ -56,7 +56,7 @@ class Matrix:
         for row in range(4):
             result = dot(Tuple(*self.values[row]), _tuple)
             products.append(result)
-        return Tuple(*products)
+        return Tuple.create_from(*products)
 
     def row(self, row_nr):
         return self.values[row_nr]

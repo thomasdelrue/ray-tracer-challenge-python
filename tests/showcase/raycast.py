@@ -2,7 +2,7 @@ from os import sep
 from raytracer.canvas import Canvas, write_ppm_to_file
 from raytracer.matrices import scaling, rotation_z, shearing
 from raytracer.rays import Ray
-from raytracer.spheres import Sphere
+from raytracer.shapes import Sphere
 from raytracer.tuples import Point, Color
 
 

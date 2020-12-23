@@ -22,18 +22,18 @@ class Tuple(NamedTuple):
 
     def __add__(self, other):
         x, y, z, w = self.x + other.x, self.y + other.y, self.z + other.z, self.w + other.w
-        return Tuple._create(x, y, z, w)
+        return Tuple.create_from(x, y, z, w)
 
     def __sub__(self, other):
         x, y, z, w = self.x - other.x, self.y - other.y, self.z - other.z, self.w - other.w
-        return Tuple._create(x, y, z, w)
+        return Tuple.create_from(x, y, z, w)
 
     def __neg__(self):
         x, y, z, w = -self.x, -self.y, -self.z, -self.w
-        return Tuple._create(x, y, z, w)
+        return Tuple.create_from(x, y, z, w)
 
     @staticmethod
-    def _create(x, y, z, w):
+    def create_from(x, y, z, w):
         if w == 1:
             return Point(x, y, z)
         elif w == 0:

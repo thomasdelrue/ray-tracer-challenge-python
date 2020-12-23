@@ -54,4 +54,5 @@ class Intersections:
             if intersection.t >= 0:
                 return intersection
 
-
+    def __repr__(self):
+        return self._container.__repr__()

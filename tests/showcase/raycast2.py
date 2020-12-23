@@ -3,7 +3,7 @@ from raytracer.canvas import Canvas, write_ppm_to_file
 from raytracer.lights import PointLight
 from raytracer.materials import Material
 from raytracer.rays import Ray
-from raytracer.spheres import Sphere
+from raytracer.shapes import Sphere
 from raytracer.tuples import Point, Color
 
 

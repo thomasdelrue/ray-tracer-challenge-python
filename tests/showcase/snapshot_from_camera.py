@@ -6,7 +6,7 @@ from raytracer.lights import PointLight
 from raytracer.materials import Material
 from raytracer.matrices import scaling, rotation_y, rotation_x, translation, view_transform
 from raytracer.scene import World
-from raytracer.spheres import Sphere
+from raytracer.shapes import Sphere
 from raytracer.tuples import Color, Point, Vector
 
 

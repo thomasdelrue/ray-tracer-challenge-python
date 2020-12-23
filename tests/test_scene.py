@@ -5,7 +5,7 @@ from raytracer.lights import PointLight
 from raytracer.matrices import scaling, view_transform, translation
 from raytracer.rays import Ray
 from raytracer.scene import World
-from raytracer.spheres import Sphere
+from raytracer.shapes import Sphere
 from raytracer.tuples import Point, Color, Vector
 import pytest
 
@@ -94,22 +94,22 @@ class TestScene:
     def test_no_shadow_when_nothing_collinear_with_point_and_light(self, default_world):
         w = default_world
         p = Point(0, 10, 0)
-        assert w.is_shadowed(p) is False
+        assert not w.is_shadowed(p)
 
     def test_shadow_when_object_is_between_point_and_light(self, default_world):
         w = default_world
         p = Point(10, -10, 10)
-        assert w.is_shadowed(p) is True
+        assert w.is_shadowed(p)
 
     def test_no_shadow_when_object_is_behind_light(self, default_world):
         w = default_world
         p = Point(-20, 20, -20)
-        assert w.is_shadowed(p) is False
+        assert not w.is_shadowed(p)
 
     def test_no_shadow_when_object_is_behind_point(self, default_world):
         w = default_world
         p = Point(-2, 2, -2)
-        assert w.is_shadowed(p) is False
+        assert not w.is_shadowed(p)
 
     def test_shade_hit_is_given_an_intersection_in_shadow(self):
         w = World()

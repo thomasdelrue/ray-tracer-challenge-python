@@ -164,7 +164,7 @@ class TestMatrices:
                     [4, -9, 3, -7],
                     [9, 1, 7, -6]])
         assert a.determinant() == -2120
-        assert a.invertible is True
+        assert a.invertible
 
     def test_noninvertible_matrix_for_invertibility(self):
         a = Matrix([[-4, 2, -2, 3],
@@ -172,7 +172,7 @@ class TestMatrices:
                     [0, -5, 1, -5],
                     [0, 0, 0, 0]])
         assert a.determinant() == 0
-        assert a.invertible is False
+        assert not a.invertible
 
     def test_inverse(self):
         a = Matrix([[-5, 2, 6, -8],
