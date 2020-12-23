@@ -6,28 +6,15 @@ from raytracer.lights import PointLight
 from raytracer.materials import Material
 from raytracer.matrices import scaling, rotation_y, rotation_x, translation, view_transform
 from raytracer.scene import World
-from raytracer.shapes import Sphere
+from raytracer.shapes import Sphere, Plane
 from raytracer.tuples import Color, Point, Vector
 
 
 if __name__ == '__main__':
-    floor = Sphere()
-    floor.transformation = scaling(10, 0.01, 10)
+    floor = Plane()
     floor.material = Material()
     floor.material.color = Color(1, 0.9, 0.9)
     floor.material.specular = 0
-
-    left_wall = Sphere()
-    left_wall.transformation = translation(0, 0, 5) * \
-        rotation_y(-pi / 4) * rotation_x(pi / 2) * \
-        scaling(10, 0.01, 10)
-    left_wall.material = floor.material
-
-    right_wall = Sphere()
-    right_wall.transformation = translation(0, 0, 5) * \
-        rotation_y(pi / 4) * rotation_x(pi / 2) * \
-        scaling(10, 0.01, 10)
-    right_wall.material = floor.material
 
     middle = Sphere()
     middle.transformation = translation(-0.5, 1, 0.5)
@@ -51,12 +38,12 @@ if __name__ == '__main__':
     left.material.specular = 0.3
 
     world = World()
-    world.add(floor, left_wall, right_wall, middle, left, right)
+    world.add(floor, middle, left, right)
     world.light_source = PointLight(Point(-10, 10, -10), Color.white())
 
-    camera = Camera(100, 50, pi / 3)
+    camera = Camera(160, 80, pi / 3)
     camera.transformation = view_transform(Point(0, 1.5, -5), Point(0, 1, 0), Vector(0, 1, 0))
 
     canvas = camera.render(world)
 
-    write_ppm_to_file(canvas.to_ppm(), f'..{sep}..{sep}resources{sep}snapshot.ppm')
+    write_ppm_to_file(canvas.to_ppm(), f'..{sep}..{sep}resources{sep}snapshot2.ppm')

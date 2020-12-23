@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from . import EPSILON
 from .intersections import Intersection, Intersections
 from .materials import Material
 from .matrices import Matrix
@@ -52,10 +53,18 @@ class Sphere(Shape):
         return Intersections(Intersection(t1, self), Intersection(t2, self))
 
     def _local_normal_at(self, point: Point) -> Vector:
-        object_point = self.transformation.inverse() * point
-        object_normal = object_point - self.origin
-        x, y, z, _ = self.transformation.inverse().transpose() * object_normal
-        return Vector(x, y, z).normalize()
+        return point - self.origin
 
     def __repr__(self):
         return f'Sphere(origin={self.origin})'
+
+
+class Plane(Shape):
+    def _local_intersect(self, ray: Ray) -> Intersections:
+        if abs(ray.direction.y) < EPSILON:
+            return Intersections()
+        t = -ray.origin.y / ray.direction.y
+        return Intersections(Intersection(t, self))
+
+    def _local_normal_at(self, point: Point) -> Vector:
+        return Vector(0, 1, 0)

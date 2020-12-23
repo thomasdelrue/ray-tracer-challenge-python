@@ -2,7 +2,7 @@ from math import sqrt, pi
 from raytracer.materials import Material
 from raytracer.matrices import Matrix, translation, scaling, rotation_z
 from raytracer.rays import Ray
-from raytracer.shapes import Shape, Sphere
+from raytracer.shapes import Shape, Sphere, Plane
 from raytracer.tuples import Vector, Point
 
 
@@ -144,3 +144,42 @@ class TestSpheres:
     def test_sphere_is_a_shape(self):
         s = Sphere()
         assert isinstance(s, Shape)
+
+
+class TestPlanes:
+    def test_normal_of_plane_is_constant_everywhere(self):
+        p = Plane()
+        n1 = p._local_normal_at(Point(0, 0, 0))
+        n2 = p._local_normal_at(Point(10, 0, -10))
+        n3 = p._local_normal_at(Point(-5, 0, 150))
+        assert n1 == Vector(0, 1, 0)
+        assert n2 == Vector(0, 1, 0)
+        assert n3 == Vector(0, 1, 0)
+
+    def test_intersect_with_ray_parallel_to_plan(self):
+        p = Plane()
+        r = Ray(Point(0, 10, 0), Vector(0, 0, 1))
+        xs = p._local_intersect(r)
+        assert xs.count == 0
+
+    def test_intersect_with_coplanar_ray(self):
+        p = Plane()
+        r = Ray(Point(0, 0, 0), Vector(0, 0, 1))
+        xs = p._local_intersect(r)
+        assert xs.count == 0
+
+    def test_intersect_plane_from_above(self):
+        p = Plane()
+        r = Ray(Point(0, 1, 0), Vector(0, -1, 0))
+        xs = p._local_intersect(r)
+        assert xs.count == 1
+        assert xs[0].t == 1
+        assert xs[0].object == p
+
+    def test_intersect_plane_from_below(self):
+        p = Plane()
+        r = Ray(Point(0, -1, 0), Vector(0, 1, 0))
+        xs = p._local_intersect(r)
+        assert xs.count == 1
+        assert xs[0].t == 1
+        assert xs[0].object == p

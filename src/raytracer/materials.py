@@ -32,8 +32,8 @@ class Material:
         specular = Color.black()
 
         if not in_shadow:
-            # light_dot_normal represents the cosine of the angle between light vector and
-            # normal vector. Negative number means light is on other side of surface
+        # light_dot_normal represents the cosine of the angle between light vector and
+        # normal vector. Negative number means light is on other side of surface
             light_dot_normal = dot(lightv, normalv)
             if light_dot_normal < 0:
                 diffuse = Color.black()
