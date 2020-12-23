@@ -1,6 +1,8 @@
+from math import pi
+from raytracer.camera import Camera
 from raytracer.intersections import Intersection
 from raytracer.lights import PointLight
-from raytracer.matrices import scaling
+from raytracer.matrices import scaling, view_transform
 from raytracer.rays import Ray
 from raytracer.scene import World
 from raytracer.spheres import Sphere
@@ -8,24 +10,25 @@ from raytracer.tuples import Point, Color, Vector
 import pytest
 
 
-class TestScene:
-    @pytest.fixture
-    def default_world(self):
-        w = World()
-        w.light = PointLight(Point(-10, 10, -10), Color.white())
-        s1 = Sphere()
-        s1.material.color = Color(0.8, 1.0, 0.6)
-        s1.material.diffuse = 0.7
-        s1.material.specular = 0.2
-        s2 = Sphere()
-        s2.transformation = scaling(0.5, 0.5, 0.5)
-        w.add(s1, s2)
-        return w
+@pytest.fixture
+def default_world():
+    w = World()
+    w.light_source = PointLight(Point(-10, 10, -10), Color.white())
+    s1 = Sphere()
+    s1.material.color = Color(0.8, 1.0, 0.6)
+    s1.material.diffuse = 0.7
+    s1.material.specular = 0.2
+    s2 = Sphere()
+    s2.transformation = scaling(0.5, 0.5, 0.5)
+    w.add(s1, s2)
+    return w
 
+
+class TestScene:
     def test_create_world(self):
         w = World()
         assert len(w.objects) == 0
-        assert w.light is None
+        assert w.light_source is None
 
     def test_intersect_world_with_ray(self, default_world):
         w = default_world
@@ -48,7 +51,7 @@ class TestScene:
 
     def test_shading_intersection_from_inside(self, default_world):
         w = default_world
-        w.light = PointLight(Point(0, 0.25, 0), Color.white())
+        w.light_source = PointLight(Point(0, 0.25, 0), Color.white())
         r = Ray(Point(0, 0, 0), Vector(0, 0, 1))
         shape = w.objects[1]
         i = Intersection(0.5, shape)
@@ -77,3 +80,14 @@ class TestScene:
         r = Ray(Point(0, 0, 0.75), Vector(0, 0, -1))
         c = w.color_at(r)
         assert c == inner.material.color
+
+    def test_render_world_with_camera(self, default_world):
+        w = default_world
+        c = Camera(11, 11, pi / 2)
+        _from = Point(0, 0, -5)
+        to = Point(0, 0, 0)
+        up = Vector(0, 2, 0)
+        c.transformation = view_transform(_from, to, up)
+        image = c.render(w)
+        assert image.pixel_at(5, 5) == Color(0.38066, 0.47583, 0.2855)
+

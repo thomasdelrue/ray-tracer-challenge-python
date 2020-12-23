@@ -6,7 +6,7 @@ from .tuples import Color
 class World:
     def __init__(self):
         self.objects = []
-        self.light = None
+        self.light_source = None
 
     def add(self, *objects):
         self.objects.extend(objects)
@@ -18,7 +18,7 @@ class World:
         return Intersections(*results)
 
     def shade_hit(self, comps: Computations):
-        return comps.object.material.lighting(self.light, comps.point, comps.eyev, comps.normalv)
+        return comps.object.material.lighting(self.light_source, comps.point, comps.eyev, comps.normalv)
 
     def color_at(self, ray: Ray) -> Color:
         xs = self.intersect(ray)
