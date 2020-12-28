@@ -1,5 +1,6 @@
 from . import EPSILON
 from .lights import PointLight
+from .patterns import stripe_at
 from .tuples import Color, Vector, Point, dot
 import math
 
@@ -11,17 +12,24 @@ class Material:
         self.diffuse = 0.9
         self.specular = 0.9
         self.shininess = 200.0
+        self.pattern = None
 
     def __eq__(self, other):
         return self.color == other.color and \
             abs(self.ambient - other.ambient) < EPSILON and \
             abs(self.diffuse - other.diffuse) < EPSILON and \
             abs(self.specular - other.specular) < EPSILON and \
-            abs(self.shininess - other.shininess) < EPSILON
+            abs(self.shininess - other.shininess) < EPSILON and \
+            self.pattern == other.pattern
 
     def lighting(self, light: PointLight, point: Point, eyev: Vector, normalv: Vector, in_shadow: bool = False) -> Color:
+        if self.pattern:
+            color = stripe_at(self.pattern, point)
+        else:
+            color = self.color
+
         # combine surface color with light's color/intensity
-        effective_color = self.color * light.intensity
+        effective_color = color * light.intensity
 
         # find direction to light source
         lightv = (light.position - point).normalize()
@@ -32,8 +40,8 @@ class Material:
         specular = Color.black()
 
         if not in_shadow:
-        # light_dot_normal represents the cosine of the angle between light vector and
-        # normal vector. Negative number means light is on other side of surface
+            # light_dot_normal represents the cosine of the angle between light vector and
+            # normal vector. Negative number means light is on other side of surface
             light_dot_normal = dot(lightv, normalv)
             if light_dot_normal < 0:
                 diffuse = Color.black()

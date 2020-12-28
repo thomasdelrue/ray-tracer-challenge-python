@@ -1,6 +1,7 @@
 from math import sqrt
 from raytracer.lights import PointLight
 from raytracer.materials import Material
+from raytracer.patterns import stripe_pattern
 from raytracer.tuples import Color, Point, Vector
 import pytest
 
@@ -60,5 +61,20 @@ class TestMaterials:
         in_shadow = True
         result = background['m'].lighting(light, background['position'], eyev, normalv, in_shadow)
         assert result == Color(0.1, 0.1, 0.1)
+
+    def test_lighting_with_pattern_applied(self):
+        m = Material()
+        m.pattern = stripe_pattern(Color.white(), Color.black())
+        m.ambient = 1
+        m.diffuse = 0
+        m.specular = 0
+        eyev = Vector(0, 0, -1)
+        normalv = Vector(0, 0, -1)
+        light = PointLight(Point(0, 0, -10), Color.white())
+        c1 = m.lighting(light, Point(0.9, 0, 0), eyev, normalv, False)
+        c2 = m.lighting(light, Point(1.1, 0, 0), eyev, normalv, False)
+        assert c1 == Color.white()
+        assert c2 == Color.black()
+
 
 
