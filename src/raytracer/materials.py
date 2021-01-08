@@ -1,6 +1,5 @@
 from . import EPSILON
 from .lights import PointLight
-from .patterns import stripe_at_object
 from .tuples import Color, Vector, Point, dot
 import math
 
@@ -25,7 +24,7 @@ class Material:
     def lighting(self, _object, light: PointLight, point: Point, eyev: Vector, normalv: Vector,
                  in_shadow: bool = False) -> Color:
         if self.pattern:
-            color = stripe_at_object(self.pattern, _object, point)
+            color = self.pattern.pattern_at_shape(_object, point)
         else:
             color = self.color
 

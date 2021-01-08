@@ -1,28 +1,32 @@
-from dataclasses import dataclass
+from abc import ABC, abstractmethod
 from .matrices import Matrix
+from .shapes import Shape
 from .tuples import Color, Point
 import math
 
 
-@dataclass
-class Pattern:
-    a: Color
-    b: Color
-    transformation: Matrix = Matrix.identity()
+class Pattern(ABC):
+    def __init__(self):
+        self.transformation: Matrix = Matrix.identity()
+
+    def pattern_at_shape(self, shape: Shape, world_point: Point) -> Color:
+        object_point = shape.transformation.inverse() * world_point
+        pattern_point = self.transformation.inverse() * object_point
+        return self.pattern_at(pattern_point)
+
+    @abstractmethod
+    def pattern_at(self, point: Point) -> Color:
+        ...
 
 
-def stripe_pattern(first_color: Color, second_color: Color):
-    return Pattern(first_color, second_color)
+class StripePattern(Pattern):
+    def __init__(self, first_color: Color, second_color: Color):
+        super().__init__()
+        self.first_color = first_color
+        self.second_color = second_color
 
-
-def stripe_at(pattern: Pattern, point: Point) -> Color:
-    if math.floor(point.x) % 2 == 0:
-        return pattern.a
-    else:
-        return pattern.b
-
-
-def stripe_at_object(pattern: Pattern, _object, world_point: Point) -> Color:
-    object_point = _object.transformation.inverse() * world_point
-    pattern_point = pattern.transformation.inverse() * object_point
-    return stripe_at(pattern, pattern_point)
+    def pattern_at(self, point: Point) -> Color:
+        if math.floor(point.x) % 2 == 0:
+            return self.first_color
+        else:
+            return self.second_color

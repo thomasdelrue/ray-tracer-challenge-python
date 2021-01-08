@@ -1,7 +1,7 @@
 from math import sqrt
 from raytracer.lights import PointLight
 from raytracer.materials import Material
-from raytracer.patterns import stripe_pattern
+from raytracer.patterns import StripePattern
 from raytracer.shapes import Sphere
 from raytracer.tuples import Color, Point, Vector
 import pytest
@@ -65,7 +65,7 @@ class TestMaterials:
 
     def test_lighting_with_pattern_applied(self):
         m = Material()
-        m.pattern = stripe_pattern(Color.white(), Color.black())
+        m.pattern = StripePattern(Color.white(), Color.black())
         m.ambient = 1
         m.diffuse = 0
         m.specular = 0
