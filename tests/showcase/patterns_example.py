@@ -5,7 +5,7 @@ from raytracer.canvas import write_ppm_to_file
 from raytracer.lights import PointLight
 from raytracer.materials import Material
 from raytracer.matrices import scaling, rotation_y, rotation_x, translation, view_transform
-from raytracer.patterns import stripe_pattern
+from raytracer.patterns import CheckersPattern
 from raytracer.scene import World
 from raytracer.shapes import Sphere, Plane
 from raytracer.tuples import Color, Point, Vector
@@ -20,7 +20,7 @@ if __name__ == '__main__':
     middle = Sphere()
     middle.transformation = translation(-0.5, 1, 0.5)
     middle.material = Material()
-    middle.material.pattern = stripe_pattern(Color(0.1, 1, 0.5), Color(1, 0, 0))
+    middle.material.pattern = CheckersPattern(Color(0.1, 1, 0.5), Color(1, 0, 0))
     middle.material.pattern.transformation = scaling(0.25, 0.25, 0.5) * rotation_y(pi / 4)
     middle.material.diffuse = 0.7
     middle.material.specular = 0.3
@@ -48,4 +48,4 @@ if __name__ == '__main__':
 
     canvas = camera.render(world)
 
-    write_ppm_to_file(canvas.to_ppm(), f'..{sep}..{sep}resources{sep}patterns.ppm')
+    write_ppm_to_file(canvas.to_ppm(), f'..{sep}..{sep}resources{sep}patterns2.ppm')

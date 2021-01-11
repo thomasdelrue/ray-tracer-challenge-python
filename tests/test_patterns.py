@@ -1,6 +1,6 @@
 from raytracer.matrices import Matrix, scaling, translation
-from raytracer.patterns import Pattern, StripePattern
-from raytracer.shapes import Shape, Sphere
+from raytracer.patterns import Pattern, StripePattern, GradientPattern, RingPattern, CheckersPattern
+from raytracer.shapes import Sphere
 from raytracer.tuples import Color, Point
 
 
@@ -9,7 +9,7 @@ def test_pattern():
         def pattern_at(self, point: Point) -> Color:
             return Color(point.x, point.y, point.z)
 
-    return TestPattern()
+    return TestPattern(Color.white(), Color.black())
 
 
 class TestPatterns:
@@ -70,5 +70,34 @@ class TestPatterns:
         pattern.transformation = translation(1, 2, 3)
         assert pattern.transformation == translation(1, 2, 3)
 
+    def test_gradient_linearly_interpolates_between_colors(self):
+        pattern = GradientPattern(Color.white(), Color.black())
+        assert pattern.pattern_at(Point(0, 0, 0)) == Color.white()
+        assert pattern.pattern_at(Point(0.25, 0, 0)) == Color(0.75, 0.75, 0.75)
+        assert pattern.pattern_at(Point(0.5, 0, 0)) == Color(0.5, 0.5, 0.5)
+        assert pattern.pattern_at(Point(0.75, 0, 0)) == Color(0.25, 0.25, 0.25)
 
+    def test_ring_should_extend_in_both_x_and_z(self):
+        pattern = RingPattern(Color.white(), Color.black())
+        assert pattern.pattern_at(Point(0, 0, 0)) == Color.white()
+        assert pattern.pattern_at(Point(1, 0, 0)) == Color.black()
+        assert pattern.pattern_at(Point(0, 0, 1)) == Color.black()
+        assert pattern.pattern_at(Point(0.708, 0, 0.708)) == Color.black()
 
+    def test_checkers_should_repeat_in_x(self):
+        pattern = CheckersPattern(Color.white(), Color.black())
+        assert pattern.pattern_at(Point(0, 0, 0)) == Color.white()
+        assert pattern.pattern_at(Point(0.99, 0, 0)) == Color.white()
+        assert pattern.pattern_at(Point(1.01, 0, 0)) == Color.black()
+
+    def test_checkers_should_repeat_in_y(self):
+        pattern = CheckersPattern(Color.white(), Color.black())
+        assert pattern.pattern_at(Point(0, 0, 0)) == Color.white()
+        assert pattern.pattern_at(Point(0, 0.99, 0)) == Color.white()
+        assert pattern.pattern_at(Point(0, 1.01, 0)) == Color.black()
+
+    def test_checkers_should_repeat_in_z(self):
+        pattern = CheckersPattern(Color.white(), Color.black())
+        assert pattern.pattern_at(Point(0, 0, 0)) == Color.white()
+        assert pattern.pattern_at(Point(0, 0, 0.99)) == Color.white()
+        assert pattern.pattern_at(Point(0, 0, 1.01)) == Color.black()

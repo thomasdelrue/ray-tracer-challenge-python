@@ -1,3 +1,4 @@
+from __future__ import annotations
 from abc import ABC, abstractmethod
 from .matrices import Matrix
 from .shapes import Shape
@@ -6,7 +7,9 @@ import math
 
 
 class Pattern(ABC):
-    def __init__(self):
+    def __init__(self, first_color: Color, second_color: Color):
+        self.first_color = first_color
+        self.second_color = second_color
         self.transformation: Matrix = Matrix.identity()
 
     def pattern_at_shape(self, shape: Shape, world_point: Point) -> Color:
@@ -20,13 +23,39 @@ class Pattern(ABC):
 
 
 class StripePattern(Pattern):
-    def __init__(self, first_color: Color, second_color: Color):
-        super().__init__()
-        self.first_color = first_color
-        self.second_color = second_color
-
     def pattern_at(self, point: Point) -> Color:
         if math.floor(point.x) % 2 == 0:
             return self.first_color
         else:
             return self.second_color
+
+
+class GradientPattern(Pattern):
+    def pattern_at(self, point: Point) -> Color:
+        distance = self.second_color - self.first_color
+        fraction = point.x - math.floor(point.x)
+        return self.first_color + distance * fraction
+
+
+class RingPattern(Pattern):
+    def pattern_at(self, point: Point) -> Color:
+        if math.floor(math.sqrt(point.x * point.x + point.z * point.z)) % 2 == 0:
+            return self.first_color
+        else:
+            return self.second_color
+
+
+class CheckersPattern(Pattern):
+    def pattern_at(self, point: Point) -> Color:
+        if (math.floor(point.x) + math.floor(point.y) + math.floor(point.z)) % 2 == 0:
+            return self.first_color
+        else:
+            return self.second_color
+
+
+class RadialGradientPattern(Pattern):
+    def pattern_at(self, point: Point) -> Color:
+        distance = self.second_color - self.first_color
+        position = math.sqrt(point.x * point.x + point.z * point.z)
+        fraction = position - math.floor(position)
+        return self.first_color + distance * fraction

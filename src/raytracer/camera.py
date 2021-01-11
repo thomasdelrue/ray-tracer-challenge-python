@@ -46,9 +46,11 @@ class Camera:
 
     def render(self, world: World) -> Canvas:
         image = Canvas(self.hsize, self.vsize)
+
         for y in range(self.vsize):
             for x in range(self.hsize):
                 ray = self.ray_for_pixel(x, y)
                 color = world.color_at(ray)
                 image.write_pixel(x, y, color)
+            print(f'{int(y / self.vsize * 100)}%')
         return image
