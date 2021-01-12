@@ -1,8 +1,9 @@
+from math import sqrt
 from raytracer import EPSILON
 from raytracer.intersections import Intersection, Intersections
 from raytracer.matrices import translation
 from raytracer.rays import Ray
-from raytracer.shapes import Sphere
+from raytracer.shapes import Sphere, Plane
 from raytracer.tuples import Point, Vector
 
 
@@ -88,3 +89,11 @@ class TestIntersections:
         comps = i.prepare_computations(r)
         assert comps.over_point.z < -EPSILON / 2
         assert comps.point.z > comps.over_point.z
+
+    def test_precompute_reflection_vector(self):
+        shape = Plane()
+        r = Ray(Point(0, 1, -1), Vector(0, -sqrt(2) / 2, sqrt(2) / 2))
+        i = Intersection(sqrt(2), shape)
+        comps = i.prepare_computations(r)
+        assert comps.reflectv == Vector(0, sqrt(2) / 2, sqrt(2) / 2)
+

@@ -1,3 +1,4 @@
+from __future__ import annotations
 from dataclasses import dataclass
 from typing import Optional
 from . import EPSILON
@@ -12,6 +13,7 @@ class Computations:
     point: Point
     eyev: Vector
     normalv: Vector
+    reflectv: Vector = 0.0
 
     def __post_init__(self):
         if dot(self.normalv, self.eyev) < 0:
@@ -31,7 +33,8 @@ class Intersection:
         point = ray.position(self.t)
         eyev = -ray.direction
         normalv = self.object.normal_at(point)
-        return Computations(self.t, self.object, point, eyev, normalv)
+        reflectv = ray.direction.reflect(normalv)
+        return Computations(self.t, self.object, point, eyev, normalv, reflectv)
 
     def __repr__(self):
         return f'Intersection(t={self.t}, object={self.object})'

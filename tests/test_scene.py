@@ -1,11 +1,11 @@
-from math import pi
+from math import pi, sqrt
 from raytracer.camera import Camera
 from raytracer.intersections import Intersection
 from raytracer.lights import PointLight
 from raytracer.matrices import scaling, view_transform, translation
 from raytracer.rays import Ray
 from raytracer.scene import World
-from raytracer.shapes import Sphere
+from raytracer.shapes import Sphere, Plane
 from raytracer.tuples import Point, Color, Vector
 import pytest
 
@@ -123,3 +123,26 @@ class TestScene:
         comps = i.prepare_computations(r)
         c = w.shade_hit(comps)
         assert c == Color(0.1, 0.1, 0.1)
+
+    def test_reflected_color_for_nonreflective_material(self, default_world):
+        w = default_world
+        r = Ray(Point(0, 0, 0), Vector(0, 0, 1))
+        shape = w.objects[1]
+        shape.material.ambient = 1
+        i = Intersection(1, shape)
+        comps = i.prepare_computations(r)
+        color = w.reflected_color(comps)
+        assert color == Color.black()
+
+    def test_strike_reflective_surface(self, default_world):
+        w = default_world
+        shape = Plane()
+        shape.material.reflective = 0.5
+        shape.transformation = translation(0, -1, 0)
+        w.add(shape)
+        r = Ray(Point(0, 0, -3), Vector(0, -sqrt(2) / 2, sqrt(2) / 2))
+        i = Intersection(sqrt(2), shape)
+        comps = i.prepare_computations(r)
+        color = w.reflected_color(comps)
+        assert color == Color(0.19033, 0.23791, 0.14274)
+

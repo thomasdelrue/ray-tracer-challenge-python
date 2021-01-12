@@ -40,3 +40,12 @@ class World:
         hit = xs.hit()
 
         return hit is not None and hit.t < distance
+
+    def reflected_color(self, comps: Computations) -> Color:
+        if comps.object.material.reflective == 0.0:
+            return Color.black()
+
+        reflect_ray = Ray(comps.over_point, comps.reflectv)
+        color = self.color_at(reflect_ray)
+
+        return color * comps.object.material.reflective
