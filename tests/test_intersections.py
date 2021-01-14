@@ -1,13 +1,23 @@
 from math import sqrt
+import pytest
 from raytracer import EPSILON
 from raytracer.intersections import Intersection, Intersections
-from raytracer.matrices import translation
+from raytracer.matrices import translation, scaling
 from raytracer.rays import Ray
 from raytracer.shapes import Sphere, Plane
 from raytracer.tuples import Point, Vector
 
 
 class TestIntersections:
+    @pytest.fixture
+    def glass_sphere(self):
+        def _create_glass_sphere():
+            s = Sphere()
+            s.material.transparency = 1.0
+            s.material.refractive_index = 1.5
+            return s
+        return _create_glass_sphere
+
     def test_intersection_encapsulates_t_and_object(self):
         s = Sphere()
         i = Intersection(3.5, s)
@@ -96,4 +106,37 @@ class TestIntersections:
         i = Intersection(sqrt(2), shape)
         comps = i.prepare_computations(r)
         assert comps.reflectv == Vector(0, sqrt(2) / 2, sqrt(2) / 2)
+
+    @pytest.mark.parametrize("index,n1,n2", [(0, 1.0, 1.5),
+                                             (1, 1.5, 2.0),
+                                             (2, 2.0, 2.5),
+                                             (3, 2.5, 2.5),
+                                             (4, 2.5, 1.5),
+                                             (5, 1.5, 1.0)])
+    def test_finding_n1_and_n2_at_various_intersections(self, glass_sphere, index, n1, n2):
+        a = glass_sphere()
+        a.transformation = scaling(2, 2, 2)
+        a.material.refractive_index = 1.5
+        b = glass_sphere()
+        b.transformation = translation(0, 0, -0.25)
+        b.material.refractive_index = 2.0
+        c = glass_sphere()
+        c.transformation = translation(0, 0, 0.25)
+        c.material.refractive_index = 2.5
+        r = Ray(Point(0, 0, -4), Vector(0, 0, 1))
+        xs = Intersections(Intersection(2, a), Intersection(2.75, b), Intersection(3.25, c),
+                           Intersection(4.75, b), Intersection(5.25, c), Intersection(6, a))
+        comps = xs[index].prepare_computations(r, xs)
+        assert comps.n1 == n1
+        assert comps.n2 == n2
+
+    def test_under_point_is_offset_below_the_surface(self, glass_sphere):
+        r = Ray(Point(0, 0, -5), Vector(0, 0, 1))
+        shape = glass_sphere()
+        shape.transformation = translation(0, 0, 1)
+        i = Intersection(5, shape)
+        xs = Intersections(i)
+        comps = i.prepare_computations(r, xs)
+        assert comps.under_point.z > EPSILON / 2
+        assert comps.point.z < comps.under_point.z
 

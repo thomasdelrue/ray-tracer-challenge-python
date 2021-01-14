@@ -77,9 +77,16 @@ class TestMaterials:
         assert c1 == Color.white()
         assert c2 == Color.black()
 
-    def test_reflectivity_of_material(self):
+    def test_reflectivity_of_default_material(self):
         m = Material()
         assert m.reflective == 0.0
+
+    def test_transparency_and_refractive_index_of_default_material(self):
+        m = Material()
+        assert m.transparency == 0.0
+        assert m.refractive_index == 1.0
+
+
 
 
 

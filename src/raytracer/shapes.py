@@ -56,7 +56,7 @@ class Sphere(Shape):
         return point - self.origin
 
     def __repr__(self):
-        return f'Sphere(origin={self.origin})'
+        return f'Sphere(origin={self.origin} ref={self.material.refractive_index})'
 
 
 class Plane(Shape):
