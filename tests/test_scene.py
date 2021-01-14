@@ -235,3 +235,20 @@ class TestScene:
         c = w.refracted_color(comps, 5)
         assert c == Color(0, 0.99888, 0.04722)
 
+    def test_shade_hit_with_transparent_material(self, default_world):
+        w = default_world
+        floor = Plane()
+        floor.transformation = translation(0, -1, 0)
+        floor.material.transparency = 0.5
+        floor.material.refractive_index = 1.5
+        ball = Sphere()
+        ball.material.color = Color(1, 0, 0)
+        ball.material.ambient = 0.5
+        ball.transformation = translation(0, -3.5, -0.5)
+        w.add(floor, ball)
+        r = Ray(Point(0, 0, -3), Vector(0, -sqrt(2) / 2, sqrt(2) / 2))
+        xs = Intersections(Intersection(sqrt(2), floor))
+        comps = xs[0].prepare_computations(r, xs)
+        color = w.shade_hit(comps, 5)
+        assert color == Color(0.93642, 0.68642, 0.68642)
+

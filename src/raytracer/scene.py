@@ -23,14 +23,15 @@ class World:
         surface = comps.object.material.lighting(comps.object, self.light_source, comps.point, comps.eyev,
                                                  comps.normalv, shadowed)
         reflected = self.reflected_color(comps, remaining)
-        return surface + reflected
+        refracted = self.refracted_color(comps, remaining)
+        return surface + reflected + refracted
 
     def color_at(self, ray: Ray, remaining: int = 4) -> Color:
         xs = self.intersect(ray)
         hit = xs.hit()
         if not hit:
             return Color.black()
-        comps = hit.prepare_computations(ray)
+        comps = hit.prepare_computations(ray, xs)
         return self.shade_hit(comps, remaining)
 
     def is_shadowed(self, point: Point) -> bool:
