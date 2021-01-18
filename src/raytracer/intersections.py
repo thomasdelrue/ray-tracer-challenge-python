@@ -1,5 +1,6 @@
 from __future__ import annotations
 from dataclasses import dataclass
+from math import sqrt
 from typing import Optional
 from . import EPSILON
 from .rays import Ray
@@ -25,6 +26,23 @@ class Computations:
             self.inside = False
         self.over_point = self.point + self.normalv * EPSILON
         self.under_point = self.point - self.normalv * EPSILON
+
+    def schlick(self) -> float:
+        cos = dot(self.eyev, self.normalv)
+
+        # total internal reflection can only occur if n1 > n2
+        if self.n1 > self.n2:
+            n_ratio = self.n1 / self.n2
+            sin2_t = n_ratio ** 2 * (1.0 - cos ** 2)
+            if sin2_t > 1.0:
+                return 1.0
+            # compute cosine theta_t using trig identity
+            cos_t = sqrt(1.0 - sin2_t)
+            cos = cos_t
+
+        r0 = ((self.n1 - self.n2) / (self.n1 + self.n2)) ** 2
+
+        return r0 + (1 - r0) * (1 - cos) ** 5
 
 
 class Intersections:

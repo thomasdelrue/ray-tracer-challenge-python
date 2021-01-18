@@ -19,7 +19,7 @@ class Shape(ABC):
         return self._local_intersect(local_ray)
 
     @abstractmethod
-    def _local_intersect(self, ray: Ray):
+    def _local_intersect(self, ray: Ray) -> Intersections:
         ...
 
     def normal_at(self, point: Point) -> Vector:
@@ -68,3 +68,45 @@ class Plane(Shape):
 
     def _local_normal_at(self, point: Point) -> Vector:
         return Vector(0, 1, 0)
+
+
+def _check_axis(origin: float, direction: float) -> (float, float):
+    t_min_numerator = -1 - origin
+    t_max_numerator = 1 - origin
+
+    if abs(direction) >= EPSILON:
+        t_min = t_min_numerator / direction
+        t_max = t_max_numerator / direction
+    else:
+        t_min = t_min_numerator * float('inf')
+        t_max = t_max_numerator * float('inf')
+
+    if t_min > t_max:
+        t_min, t_max = t_max, t_min
+
+    return t_min, t_max
+
+
+class Cube(Shape):
+    def _local_normal_at(self, point: Point) -> Vector:
+        max_c = max(abs(point.x), abs(point.y), abs(point.z))
+        if max_c == abs(point.x):
+            return Vector(point.x, 0, 0)
+        elif max_c == abs(point.y):
+            return Vector(0, point.y, 0)
+        else:
+            return Vector(0, 0, point.z)
+
+    def _local_intersect(self, ray: Ray):
+        xt_min, xt_max = _check_axis(ray.origin.x, ray.direction.x)
+        yt_min, yt_max = _check_axis(ray.origin.y, ray.direction.y)
+        zt_min, zt_max = _check_axis(ray.origin.z, ray.direction.z)
+
+        t_min = max(xt_min, yt_min, zt_min)
+        t_max = min(xt_max, yt_max, zt_max)
+
+        if t_min > t_max:
+            return Intersections()
+
+        return Intersections(Intersection(t_min, self), Intersection(t_max, self))
+

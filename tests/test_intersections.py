@@ -4,7 +4,7 @@ from raytracer import EPSILON
 from raytracer.intersections import Intersection, Intersections
 from raytracer.matrices import translation, scaling
 from raytracer.rays import Ray
-from raytracer.shapes import Sphere, Plane
+from raytracer.shapes import Sphere, Plane, Cube
 from raytracer.tuples import Point, Vector
 
 
@@ -139,4 +139,58 @@ class TestIntersections:
         comps = i.prepare_computations(r, xs)
         assert comps.under_point.z > EPSILON / 2
         assert comps.point.z < comps.under_point.z
+
+    def test_schlick_approximation_under_total_internal_reflection(self, glass_sphere):
+        shape = glass_sphere()
+        r = Ray(Point(0, 0, sqrt(2) / 2), Vector(0, 1, 0))
+        xs = Intersections(Intersection(-sqrt(2) / 2, shape), Intersection(sqrt(2) / 2, shape))
+        comps = xs[1].prepare_computations(r, xs)
+        reflectance = comps.schlick()
+        assert reflectance == 1.0
+
+    def test_schlick_approximation_with_perpendicular_viewing_angle(self, glass_sphere):
+        shape = glass_sphere()
+        r = Ray(Point(0, 0, 0), Vector(0, 1, 0))
+        xs = Intersections(Intersection(-1, shape), Intersection(1, shape))
+        comps = xs[1].prepare_computations(r, xs)
+        reflectance = comps.schlick()
+        assert reflectance == pytest.approx(0.04)
+
+    def test_schlick_approximation_with_small_angle_and_n2_greater_than_n1(self, glass_sphere):
+        shape = glass_sphere()
+        r = Ray(Point(0, 0.99, -2), Vector(0, 0, 1))
+        xs = Intersections(Intersection(1.8589, shape))
+        comps = xs[0].prepare_computations(r, xs)
+        reflectance = comps.schlick()
+        assert reflectance == pytest.approx(0.48873, EPSILON)
+
+    @pytest.mark.parametrize("origin,direction,t1,t2", [(Point(5, 0.5, 0), Vector(-1, 0, 0), 4, 6),
+                                                        (Point(-5, 0.5, 0), Vector(1, 0, 0), 4, 6),
+                                                        (Point(0.5, 5, 0), Vector(0, -1, 0), 4, 6),
+                                                        (Point(0.5, -5, 0), Vector(0, 1, 0), 4, 6),
+                                                        (Point(0.5, 0, 5), Vector(0, 0, -1), 4, 6),
+                                                        (Point(0.5, 0, -5), Vector(0, 0, 1), 4, 6),
+                                                        (Point(0, 0.5, 0), Vector(0, 0, 1), -1, 1)])
+    def test_ray_intersects_cube(self, origin, direction, t1, t2):
+        c = Cube()
+        r = Ray(origin, direction)
+        xs = c._local_intersect(r)
+        assert xs.count == 2
+        assert xs[0].t == t1
+        assert xs[1].t == t2
+
+    @pytest.mark.parametrize("origin,direction", [(Point(-2, 0, 0), Vector(0.2673, 0.5345, 0.8018)),
+                                                  (Point(0, -2, 0), Vector(0.8018, 0.2673, 0.5345)),
+                                                  (Point(0, 0, -2), Vector(0.5345, 0.8018, 0.2673)),
+                                                  (Point(2, 0, 2), Vector(0, 0, -1)),
+                                                  (Point(0, 2, 2), Vector(0, -1, 0)),
+                                                  (Point(2, 2, 0), Vector(-1, 0, 0))])
+    def test_ray_misses_cube(self, origin, direction):
+        c = Cube()
+        r = Ray(origin, direction)
+        xs = c._local_intersect(r)
+        assert xs.count == 0
+
+
+
 

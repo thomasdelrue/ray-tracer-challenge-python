@@ -4,6 +4,7 @@ from .rays import Ray
 from .scene import World
 from .tuples import Point
 import math
+import time
 
 
 class Camera:
@@ -47,10 +48,14 @@ class Camera:
     def render(self, world: World) -> Canvas:
         image = Canvas(self.hsize, self.vsize)
 
+        start = time.perf_counter()
         for y in range(self.vsize):
             for x in range(self.hsize):
                 ray = self.ray_for_pixel(x, y)
                 color = world.color_at(ray)
                 image.write_pixel(x, y, color)
             print(f'{int(y / self.vsize * 100)}%')
+
+        duration = time.perf_counter() - start
+        print(f'Rendered in {duration:.2f} seconds')
         return image

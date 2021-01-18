@@ -24,7 +24,13 @@ class World:
                                                  comps.normalv, shadowed)
         reflected = self.reflected_color(comps, remaining)
         refracted = self.refracted_color(comps, remaining)
-        return surface + reflected + refracted
+
+        material = comps.object.material
+        if material.reflective > 0 and material.transparency > 0:
+            reflectance = comps.schlick()
+            return surface + reflected * reflectance + refracted * (1 - reflectance)
+        else:
+            return surface + reflected + refracted
 
     def color_at(self, ray: Ray, remaining: int = 4) -> Color:
         xs = self.intersect(ray)

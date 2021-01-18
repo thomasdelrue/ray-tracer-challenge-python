@@ -2,8 +2,9 @@ from math import sqrt, pi
 from raytracer.materials import Material
 from raytracer.matrices import Matrix, translation, scaling, rotation_z
 from raytracer.rays import Ray
-from raytracer.shapes import Shape, Sphere, Plane
+from raytracer.shapes import Shape, Sphere, Plane, Cube
 from raytracer.tuples import Vector, Point
+import pytest
 
 
 def test_shape():
@@ -183,3 +184,17 @@ class TestPlanes:
         assert xs.count == 1
         assert xs[0].t == 1
         assert xs[0].object == p
+
+    @pytest.mark.parametrize("point,normal", [(Point(1, 0.5, -0.8), Vector(1, 0, 0)),
+                                              (Point(-1, -0.2, 0.9), Vector(-1, 0, 0)),
+                                              (Point(-0.4, 1, -0.1), Vector(0, 1, 0)),
+                                              (Point(0.3, -1, -0.7), Vector(0, -1, 0)),
+                                              (Point(-0.6, 0.3, 1), Vector(0, 0, 1)),
+                                              (Point(0.4, 0.4, -1), Vector(0, 0, -1)),
+                                              (Point(1, 1, 1), Vector(1, 0, 0)),
+                                              (Point(-1, -1, -1), Vector(-1, 0, 0))])
+    def test_normal_on_surface_of_cube(self, point, normal):
+        c = Cube()
+        p = point
+        result = c._local_normal_at(p)
+        assert result == normal
