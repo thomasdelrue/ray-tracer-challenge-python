@@ -110,3 +110,45 @@ class Cube(Shape):
 
         return Intersections(Intersection(t_min, self), Intersection(t_max, self))
 
+
+class Cylinder(Shape):
+    def __init__(self, closed: bool = False):
+        super().__init__()
+        self.minimum = float('-inf')
+        self.maximum = float('inf')
+        self.closed = closed
+
+    def _local_normal_at(self, point: Point) -> Vector:
+        return Vector(point.x, 0, point.z)
+
+    def _local_intersect(self, ray: Ray) -> Intersections:
+        a = ray.direction.x ** 2 + ray.direction.z ** 2
+
+        # ray is parallel to y axis
+        if a < EPSILON:
+            return Intersections()
+
+        b = 2 * ray.origin.x * ray.direction.x + 2 * ray.origin.z * ray.direction.z
+        c = ray.origin.x ** 2 + ray.origin.z ** 2 - 1
+        discriminant = b ** 2 - 4 * a * c
+
+        # ray does not intersect cylinder
+        if discriminant < 0:
+            return Intersections()
+
+        t0 = (-b - math.sqrt(discriminant)) / (2 * a)
+        t1 = (-b + math.sqrt(discriminant)) / (2 * a)
+        if t0 > t1:
+            t0, t1 = t1, t0
+
+        xs = Intersections()
+        y0 = ray.origin.y + t0 * ray.direction.y
+        if self.minimum < y0 < self.maximum:
+            xs.append(Intersection(t0, self))
+
+        y1 = ray.origin.y + t1 * ray.direction.y
+        if self.minimum < y1 < self.maximum:
+            xs.append(Intersection(t1, self))
+
+        return xs
+

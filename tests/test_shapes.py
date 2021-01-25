@@ -1,8 +1,9 @@
 from math import sqrt, pi
+from raytracer import EPSILON
 from raytracer.materials import Material
 from raytracer.matrices import Matrix, translation, scaling, rotation_z
 from raytracer.rays import Ray
-from raytracer.shapes import Shape, Sphere, Plane, Cube
+from raytracer.shapes import Shape, Sphere, Plane, Cube, Cylinder
 from raytracer.tuples import Vector, Point
 import pytest
 
@@ -185,7 +186,7 @@ class TestPlanes:
         assert xs[0].t == 1
         assert xs[0].object == p
 
-    @pytest.mark.parametrize("point,normal", [(Point(1, 0.5, -0.8), Vector(1, 0, 0)),
+    @pytest.mark.parametrize("point, normal", [(Point(1, 0.5, -0.8), Vector(1, 0, 0)),
                                               (Point(-1, -0.2, 0.9), Vector(-1, 0, 0)),
                                               (Point(-0.4, 1, -0.1), Vector(0, 1, 0)),
                                               (Point(0.3, -1, -0.7), Vector(0, -1, 0)),
@@ -198,3 +199,74 @@ class TestPlanes:
         p = point
         result = c._local_normal_at(p)
         assert result == normal
+
+    @pytest.mark.parametrize("origin, direction", [(Point(1, 0, 0), Vector(0, 1, 0)),
+                                                  (Point(0, 0, 0), Vector(0, 1, 0)),
+                                                  (Point(0, 0, -5), Vector(1, 1, 1))])
+    def test_ray_misses_cylinder(self, origin, direction):
+        c = Cylinder()
+        norm_direction = direction.normalize()
+        r = Ray(origin, norm_direction)
+        xs = c._local_intersect(r)
+        assert xs.count == 0
+
+    @pytest.mark.parametrize("origin, direction, t0, t1", [(Point(1, 0, -5), Vector(0, 0, 1), 5, 5),
+                                                          (Point(0, 0, -5), Vector(0, 0, 1), 4, 6),
+                                                          (Point(0.5, 0, -5), Vector(0.1, 1, 1), 6.80798, 7.08872)])
+    def test_ray_strikes_cylinder(self, origin, direction, t0, t1):
+        c = Cylinder()
+        norm_direction = direction.normalize()
+        r = Ray(origin, norm_direction)
+        xs = c._local_intersect(r)
+        assert xs.count == 2
+        assert xs[0].t == pytest.approx(t0, EPSILON)
+        assert xs[1].t == pytest.approx(t1, EPSILON)
+
+    @pytest.mark.parametrize("point, normal", [(Point(1, 0, 0), Vector(1, 0, 0)),
+                                               (Point(0, 5, -1), Vector(0, 0, -1)),
+                                               (Point(0, -2, 1), Vector(0, 0, 1)),
+                                               (Point(-1, 1, 0), Vector(-1, 0, 0))])
+    def test_normal_on_cylinder(self, point, normal):
+        c = Cylinder()
+        n = c._local_normal_at(point)
+        assert n == normal
+
+    def test_default_min_and_max_for_cylinder(self):
+        c = Cylinder()
+        assert c.minimum == float('-inf')
+        assert c.maximum == float('inf')
+
+    @pytest.mark.parametrize("point, direction, count", [(Point(0, 1.5, 0), Vector(0.1, 1, 0), 0),
+                                                         (Point(0, 3, -5), Vector(0, 0, 1), 0),
+                                                         (Point(0, 0, -5), Vector(0, 0, 1), 0),
+                                                         (Point(0, 2, -5), Vector(0, 0, 1), 0),
+                                                         (Point(0, 1, -5), Vector(0, 0, 1), 0),
+                                                         (Point(0, 1.5, -5), Vector(0, 0, 1), 2)])
+    def test_intersecting_constrained_cylinder(self, point, direction, count):
+        c = Cylinder()
+        c.minimum = 1
+        c.maximum = 2
+        norm_direction = direction.normalize()
+        r = Ray(point, norm_direction)
+        xs = c._local_intersect(r)
+        assert xs.count == count
+
+    def test_default_closed_value_for_cylinder(self):
+        c = Cylinder()
+        assert not c.closed
+
+    @pytest.mark.parametrize("point, direction, count", [(Point(0, 3, 0), Vector(0, -1, 0), 2),
+                                                         (Point(0, 3, -2), Vector(0, -1, 2), 2),
+                                                         (Point(0, 4, -2), Vector(0, -1, 1), 2),
+                                                         (Point(0, 0, -2), Vector(0, 1, 2), 2),
+                                                         (Point(0, -1, -2), Vector(0, 1, 1), 2)])
+    def test_intersecting_caps_of_closed_cylinder(self, point, direction, count):
+        c = Cylinder(closed=True)
+        c.minimum = 1
+        c.maximum = 2
+        norm_direction = direction.normalize()
+        r = Ray(point, norm_direction)
+        xs = c._local_intersect(r)
+        assert xs.count == count
+        assert c.closed
+

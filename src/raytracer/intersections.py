@@ -53,6 +53,10 @@ class Intersections:
     def count(self):
         return len(self._collection)
 
+    def append(self, intersection: Intersection):
+        self._collection.append(intersection)
+        self._collection = sorted(self._collection, key=lambda x: x.t)
+
     def __getitem__(self, item) -> Intersection:
         return self._collection[item]
 
