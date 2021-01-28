@@ -111,6 +111,14 @@ class Cube(Shape):
         return Intersections(Intersection(t_min, self), Intersection(t_max, self))
 
 
+# Checks to see if the intersection at 't' is within a radius
+# of 1 (the radius of your cylinders) from the y axis
+def _check_cap(ray: Ray, t: float) -> bool:
+    x = ray.origin.x + t * ray.direction.x
+    z = ray.origin.z + t * ray.direction.z
+    return x * x + z * z <= 1
+
+
 class Cylinder(Shape):
     def __init__(self, closed: bool = False):
         super().__init__()
@@ -122,33 +130,48 @@ class Cylinder(Shape):
         return Vector(point.x, 0, point.z)
 
     def _local_intersect(self, ray: Ray) -> Intersections:
+        xs = Intersections()
+
         a = ray.direction.x ** 2 + ray.direction.z ** 2
 
-        # ray is parallel to y axis
-        if a < EPSILON:
-            return Intersections()
+        # ray is not parallel to y axis
+        if a >= EPSILON:
+            b = 2 * ray.origin.x * ray.direction.x + 2 * ray.origin.z * ray.direction.z
+            c = ray.origin.x ** 2 + ray.origin.z ** 2 - 1
+            discriminant = b ** 2 - 4 * a * c
 
-        b = 2 * ray.origin.x * ray.direction.x + 2 * ray.origin.z * ray.direction.z
-        c = ray.origin.x ** 2 + ray.origin.z ** 2 - 1
-        discriminant = b ** 2 - 4 * a * c
+            # ray does not intersect cylinder
+            if discriminant < 0:
+                return Intersections()
 
-        # ray does not intersect cylinder
-        if discriminant < 0:
-            return Intersections()
+            t0 = (-b - math.sqrt(discriminant)) / (2 * a)
+            t1 = (-b + math.sqrt(discriminant)) / (2 * a)
+            if t0 > t1:
+                t0, t1 = t1, t0
 
-        t0 = (-b - math.sqrt(discriminant)) / (2 * a)
-        t1 = (-b + math.sqrt(discriminant)) / (2 * a)
-        if t0 > t1:
-            t0, t1 = t1, t0
+            y0 = ray.origin.y + t0 * ray.direction.y
+            if self.minimum < y0 < self.maximum:
+                xs.append(Intersection(t0, self))
 
-        xs = Intersections()
-        y0 = ray.origin.y + t0 * ray.direction.y
-        if self.minimum < y0 < self.maximum:
-            xs.append(Intersection(t0, self))
+            y1 = ray.origin.y + t1 * ray.direction.y
+            if self.minimum < y1 < self.maximum:
+                xs.append(Intersection(t1, self))
 
-        y1 = ray.origin.y + t1 * ray.direction.y
-        if self.minimum < y1 < self.maximum:
-            xs.append(Intersection(t1, self))
+        xs.extend(self.intersect_caps(ray))
 
         return xs
 
+    def intersect_caps(self, ray: Ray) -> Intersections:
+        xs = Intersections()
+        if not self.closed or abs(ray.direction.y) < EPSILON:
+            return xs
+
+        t = (self.minimum - ray.origin.y) / ray.direction.y
+        if _check_cap(ray, t):
+            xs.append(Intersection(t, self))
+
+        t = (self.maximum - ray.origin.y) / ray.direction.y
+        if _check_cap(ray, t):
+            xs.append(Intersection(t, self))
+
+        return xs

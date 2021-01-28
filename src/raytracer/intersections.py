@@ -55,6 +55,14 @@ class Intersections:
 
     def append(self, intersection: Intersection):
         self._collection.append(intersection)
+        self._sort()
+
+    def extend(self, intersections: Intersections):
+        for intersection in intersections:
+            self._collection.append(intersection)
+        self._sort()
+
+    def _sort(self):
         self._collection = sorted(self._collection, key=lambda x: x.t)
 
     def __getitem__(self, item) -> Intersection:
