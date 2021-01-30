@@ -3,7 +3,7 @@ from raytracer import EPSILON
 from raytracer.materials import Material
 from raytracer.matrices import Matrix, translation, scaling, rotation_z
 from raytracer.rays import Ray
-from raytracer.shapes import Shape, Sphere, Plane, Cube, Cylinder
+from raytracer.shapes import Shape, Sphere, Plane, Cube, Cylinder, Cone, Group
 from raytracer.tuples import Vector, Point
 import pytest
 
@@ -186,6 +186,8 @@ class TestPlanes:
         assert xs[0].t == 1
         assert xs[0].object == p
 
+
+class TestCubes:
     @pytest.mark.parametrize("point, normal", [(Point(1, 0.5, -0.8), Vector(1, 0, 0)),
                                               (Point(-1, -0.2, 0.9), Vector(-1, 0, 0)),
                                               (Point(-0.4, 1, -0.1), Vector(0, 1, 0)),
@@ -200,6 +202,8 @@ class TestPlanes:
         result = c._local_normal_at(p)
         assert result == normal
 
+
+class TestCylinders:
     @pytest.mark.parametrize("origin, direction", [(Point(1, 0, 0), Vector(0, 1, 0)),
                                                   (Point(0, 0, 0), Vector(0, 1, 0)),
                                                   (Point(0, 0, -5), Vector(1, 1, 1))])
@@ -270,3 +274,64 @@ class TestPlanes:
         assert xs.count == count
         assert c.closed
 
+    @pytest.mark.parametrize("point, normal", [(Point(0, 1, 0), Vector(0, -1, 0)),
+                                               (Point(0.5, 1, 0), Vector(0, -1, 0)),
+                                               (Point(0, 1, 0.5), Vector(0, -1, 0)),
+                                               (Point(0, 2, 0), Vector(0, 1, 0)),
+                                               (Point(0.5, 2, 0), Vector(0, 1, 0)),
+                                               (Point(0, 2, 0.5), Vector(0, 1, 0))])
+    def test_normal_vector_on_cylinders_end_caps(self, point, normal):
+        c = Cylinder(closed=True)
+        c.minimum = 1
+        c.maximum = 2
+        n = c._local_normal_at(point)
+        assert n == normal
+
+
+class TestCones:
+    @pytest.mark.parametrize("origin, direction, t0, t1", [(Point(0, 0, -5), Vector(0, 0, 1), 5, 5),
+                                                           (Point(0, 0, -5), Vector(1, 1, 1), 8.66025, 8.66025),
+                                                           (Point(1, 1, -5), Vector(-0.5, -1, 1), 4.55006, 49.44994)])
+    def test_intersect_cone_with_ray(self, origin, direction, t0, t1):
+        shape = Cone()
+        norm_direction = direction.normalize()
+        r = Ray(origin, norm_direction)
+        xs = shape._local_intersect(r)
+        assert xs.count == 2
+        assert xs[0].t == pytest.approx(t0, EPSILON)
+        assert xs[1].t == pytest.approx(t1, EPSILON)
+
+    def test_intersecting_cone_with_ray_parallel_to_one_of_halves(self):
+        shape = Cone()
+        norm_direction = Vector(0, 1, 1).normalize()
+        r = Ray(Point(0, 0, -1), norm_direction)
+        xs = shape._local_intersect(r)
+        assert xs.count == 1
+        assert xs[0].t == pytest.approx(0.35355, EPSILON)
+
+    @pytest.mark.parametrize("origin, direction, count", [(Point(0, 0, -5), Vector(0, 1, 0), 0),
+                                                          (Point(0, 0, -0.25), Vector(0, 1, 1), 2),
+                                                          (Point(0, 0, -0.25), Vector(0, 1, 0), 4)])
+    def test_intersecting_cone_end_caps(self, origin, direction, count):
+        shape = Cone(closed=True)
+        shape.minimum = -0.5
+        shape.maximum = 0.5
+        norm_direction = direction.normalize()
+        r = Ray(origin, norm_direction)
+        xs = shape._local_intersect(r)
+        assert xs.count == count
+
+    @pytest.mark.parametrize("point, normal", [(Point(0, 0, 0), Vector(0, 0, 0)),
+                                               (Point(1, 1, 1), Vector(1, -sqrt(2), 1)),
+                                               (Point(-1, -1, 0), Vector(-1, 1, 0))])
+    def test_normal_vector_on_cone(self, point, normal):
+        shape = Cone()
+        n = shape._local_normal_at(point)
+        assert n == normal
+
+
+class TestGroups:
+    def test_create_new_group(self):
+        g = Group()
+        assert g.transformation == Matrix.identity()
+        assert g.empty

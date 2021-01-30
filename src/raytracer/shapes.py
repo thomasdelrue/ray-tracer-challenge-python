@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from typing import List
 from . import EPSILON
 from .intersections import Intersection, Intersections
 from .materials import Material
@@ -112,11 +113,34 @@ class Cube(Shape):
 
 
 # Checks to see if the intersection at 't' is within a radius
-# of 1 (the radius of your cylinders) from the y axis
-def _check_cap(ray: Ray, t: float) -> bool:
+# from the y axis
+def _check_cap(ray: Ray, t: float, radius: float = 1.0) -> bool:
     x = ray.origin.x + t * ray.direction.x
     z = ray.origin.z + t * ray.direction.z
-    return x * x + z * z <= 1
+    return x * x + z * z <= radius
+
+
+def _calculate_intersections(a: float, b: float, c: float, ray: Ray, _object) -> Intersections:
+    xs = Intersections()
+    discriminant = b ** 2 - 4 * a * c
+
+    # ray does not intersect object
+    if discriminant < 0:
+        return Intersections()
+
+    t0 = (-b - math.sqrt(discriminant)) / (2 * a)
+    t1 = (-b + math.sqrt(discriminant)) / (2 * a)
+    if t0 > t1:
+        t0, t1 = t1, t0
+
+    y0 = ray.origin.y + t0 * ray.direction.y
+    if _object.minimum < y0 < _object.maximum:
+        xs.append(Intersection(t0, _object))
+
+    y1 = ray.origin.y + t1 * ray.direction.y
+    if _object.minimum < y1 < _object.maximum:
+        xs.append(Intersection(t1, _object))
+    return xs
 
 
 class Cylinder(Shape):
@@ -127,7 +151,14 @@ class Cylinder(Shape):
         self.closed = closed
 
     def _local_normal_at(self, point: Point) -> Vector:
-        return Vector(point.x, 0, point.z)
+        dist = point.x ** 2 + point.z ** 2
+
+        if dist < 1 and point.y >= self.maximum - EPSILON:
+            return Vector(0, 1, 0)
+        elif dist < 1 and point.y <= self.minimum + EPSILON:
+            return Vector(0, -1, 0)
+        else:
+            return Vector(point.x, 0, point.z)
 
     def _local_intersect(self, ray: Ray) -> Intersections:
         xs = Intersections()
@@ -135,27 +166,11 @@ class Cylinder(Shape):
         a = ray.direction.x ** 2 + ray.direction.z ** 2
 
         # ray is not parallel to y axis
-        if a >= EPSILON:
+        if abs(a) >= EPSILON:
             b = 2 * ray.origin.x * ray.direction.x + 2 * ray.origin.z * ray.direction.z
             c = ray.origin.x ** 2 + ray.origin.z ** 2 - 1
-            discriminant = b ** 2 - 4 * a * c
 
-            # ray does not intersect cylinder
-            if discriminant < 0:
-                return Intersections()
-
-            t0 = (-b - math.sqrt(discriminant)) / (2 * a)
-            t1 = (-b + math.sqrt(discriminant)) / (2 * a)
-            if t0 > t1:
-                t0, t1 = t1, t0
-
-            y0 = ray.origin.y + t0 * ray.direction.y
-            if self.minimum < y0 < self.maximum:
-                xs.append(Intersection(t0, self))
-
-            y1 = ray.origin.y + t1 * ray.direction.y
-            if self.minimum < y1 < self.maximum:
-                xs.append(Intersection(t1, self))
+            xs.extend(_calculate_intersections(a, b, c, ray, self))
 
         xs.extend(self.intersect_caps(ray))
 
@@ -175,3 +190,73 @@ class Cylinder(Shape):
             xs.append(Intersection(t, self))
 
         return xs
+
+
+class Cone(Shape):
+    def __init__(self, closed: bool = False):
+        super().__init__()
+        self.minimum = float('-inf')
+        self.maximum = float('inf')
+        self.closed = closed
+
+    def _local_intersect(self, ray: Ray) -> Intersections:
+        xs = Intersections()
+
+        a = ray.direction.x ** 2 - ray.direction.y ** 2 + ray.direction.z ** 2
+        b = 2 * ray.origin.x * ray.direction.x - 2 * ray.origin.y * ray.direction.y + 2 * ray.origin.z * ray.direction.z
+        c = ray.origin.x ** 2 + ray.origin.z ** 2 - ray.origin.y ** 2
+
+        # ray is not parallel to y axis
+        if abs(a) >= EPSILON:
+            xs.extend(_calculate_intersections(a, b, c, ray, self))
+        elif abs(b) >= EPSILON:
+            t = -c / (2 * b)
+            xs.append(Intersection(t, self))
+
+        xs.extend(self.intersect_caps(ray))
+
+        return xs
+
+    def intersect_caps(self, ray: Ray) -> Intersections:
+        xs = Intersections()
+        if not self.closed or abs(ray.direction.y) < EPSILON:
+            return xs
+
+        t = (self.minimum - ray.origin.y) / ray.direction.y
+        if _check_cap(ray, t, abs(self.minimum)):
+            xs.append(Intersection(t, self))
+
+        t = (self.maximum - ray.origin.y) / ray.direction.y
+        if _check_cap(ray, t, abs(self.maximum)):
+            xs.append(Intersection(t, self))
+
+        return xs
+
+    def _local_normal_at(self, point: Point) -> Vector:
+        dist = point.x ** 2 + point.z ** 2
+
+        if dist < 1 and point.y >= self.maximum - EPSILON:
+            return Vector(0, 1, 0)
+        elif dist < 1 and point.y <= self.minimum + EPSILON:
+            return Vector(0, -1, 0)
+        else:
+            y = math.sqrt(dist)
+            if point.y > 0:
+                y = -y
+            return Vector(point.x, y, point.z)
+
+
+class Group(Shape):
+    def __init__(self):
+        super().__init__()
+        self._collection: List[Shape] = []
+
+    @property
+    def empty(self):
+        return len(self._collection) == 0
+
+    def _local_normal_at(self, point: Point) -> Vector:
+        pass
+
+    def _local_intersect(self, ray: Ray) -> Intersections:
+        pass

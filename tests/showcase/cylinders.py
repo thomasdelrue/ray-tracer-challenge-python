@@ -15,7 +15,7 @@ if __name__ == '__main__':
     floor.material.color = Color(.8, .8, .8)
     floor.material.reflective = .2
 
-    cylinder = Cylinder()
+    cylinder = Cylinder(closed=True)
     cylinder.maximum = 0.25
     cylinder.material.color = Color(.8, 0, 0)
     cylinder.material.reflective = .6
