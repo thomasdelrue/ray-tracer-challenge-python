@@ -335,3 +335,17 @@ class TestGroups:
         g = Group()
         assert g.transformation == Matrix.identity()
         assert g.empty
+
+    def test_shape_has_parent_attribute(self):
+        s = test_shape()
+        assert s.parent is None
+
+    def test_adding_child_to_group(self):
+        g = Group()
+        s = test_shape()
+        g.add_child(s)
+        assert not g.empty
+        assert s in g
+        assert s.parent == g
+
+

@@ -14,6 +14,7 @@ class Shape(ABC):
         self.origin = Point(0, 0, 0)
         self.transformation = Matrix.identity()
         self.material = Material()
+        self.parent: Shape = None
 
     def intersect(self, ray: Ray) -> Intersections:
         local_ray = ray.transform(self.transformation.inverse())
@@ -254,6 +255,13 @@ class Group(Shape):
     @property
     def empty(self):
         return len(self._collection) == 0
+
+    def add_child(self, child: Shape):
+        child.parent = self
+        self._collection.append(child)
+
+    def __getitem__(self, item) -> Shape:
+        return self._collection[item]
 
     def _local_normal_at(self, point: Point) -> Vector:
         pass
