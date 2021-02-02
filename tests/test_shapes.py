@@ -1,9 +1,9 @@
 from math import sqrt, pi
-from raytracer import EPSILON
+from raytracer import INF
 from raytracer.materials import Material
 from raytracer.matrices import Matrix, translation, scaling, rotation_z, rotation_y
 from raytracer.rays import Ray
-from raytracer.shapes import Shape, Sphere, Plane, Cube, Cylinder, Cone, Group
+from raytracer.shapes import *
 from raytracer.tuples import Vector, Point
 import pytest
 
@@ -15,6 +15,9 @@ def test_shape():
 
         def _local_normal_at(self, point: Point) -> Vector:
             return Vector(point.x, point.y, point.z)
+
+        def bounds(self) -> BoundingBox:
+            return BoundingBox(Point(-1, -1, -1), Point(1, 1, 1))
 
     return TestShape()
 
@@ -133,7 +136,7 @@ class TestSpheres:
         n = s._local_normal_at(Point(0, 0, 1))
         assert n == Vector(0, 0, 1)
 
-    def test_normal_sphere_at_nonaxial_point(self):
+    def test_normal_sphere_at_non_axial_point(self):
         s = Sphere()
         n = s._local_normal_at(Point(sqrt(3) / 3, sqrt(3) / 3, sqrt(3) / 3))
         assert n == Vector(sqrt(3) / 3, sqrt(3) / 3, sqrt(3) / 3)
@@ -237,8 +240,8 @@ class TestCylinders:
 
     def test_default_min_and_max_for_cylinder(self):
         c = Cylinder()
-        assert c.minimum == float('-inf')
-        assert c.maximum == float('inf')
+        assert c.minimum == -INF
+        assert c.maximum == INF
 
     @pytest.mark.parametrize("point, direction, count", [(Point(0, 1.5, 0), Vector(0.1, 1, 0), 0),
                                                          (Point(0, 3, -5), Vector(0, 0, 1), 0),
@@ -406,5 +409,25 @@ class TestGroups:
         n = s.normal_to_world(Vector(sqrt(3) / 3, sqrt(3) / 3, sqrt(3) / 3))
         assert n == Vector(0.28571, 0.42857, -0.85714)
 
+    def test_find_normal_on_child_object(self):
+        g1 = Group()
+        g1.transformation = rotation_y(pi / 2)
+        g2 = Group()
+        g2.transformation = scaling(1, 2, 3)
+        g1.add_children(g2)
 
+        s = Sphere()
+        s.transformation = translation(5, 0, 0)
+        g2.add_children(s)
+        n = s.normal_at(Point(1.7321, 1.1547, -5.5774))
+        assert n == Vector(0.28570, 0.42854, -0.85716)
+
+
+class TestBoundingBoxes:
+    def test_create_empty_bounding_box(self):
+        box = BoundingBox()
+        x, y, z, _ = box.minimum
+        assert (x, y, z) == (INF, INF, INF)
+        x, y, z, _ = box.maximum
+        assert (x, y, z) == (-INF, -INF, -INF)
 

@@ -13,7 +13,7 @@ class Pattern(ABC):
         self.transformation: Matrix = Matrix.identity()
 
     def pattern_at_shape(self, shape: Shape, world_point: Point) -> Color:
-        object_point = shape.transformation.inverse() * world_point
+        object_point = shape.world_to_object(world_point)
         pattern_point = self.transformation.inverse() * object_point
         return self.pattern_at(pattern_point)
 

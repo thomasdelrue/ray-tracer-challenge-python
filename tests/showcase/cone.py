@@ -3,7 +3,6 @@ from os import sep
 from raytracer.camera import Camera
 from raytracer.canvas import write_ppm_to_file
 from raytracer.lights import PointLight
-from raytracer.patterns import *
 from raytracer.matrices import translation, view_transform
 from raytracer.scene import World
 from raytracer.shapes import Cone
@@ -11,15 +10,10 @@ from raytracer.tuples import Color, Point, Vector
 
 
 if __name__ == '__main__':
-    # floor = Plane()
-    # floor.material.color = Color(.8, .8, .8)
-    # floor.material.reflective = .2
-
     cone = Cone(closed=False)
     cone.maximum = 1
     cone.minimum = -1
     cone.material.color = Color(.8, 0, 0)
-    cone.material.reflective = .6
     cone.transformation = translation(0, 1, 0)
 
     world = World()

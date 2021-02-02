@@ -1,7 +1,7 @@
 from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import List, Optional
-from . import EPSILON
+from . import EPSILON, INF
 from .intersections import Intersection, Intersections
 from .materials import Material
 from .matrices import Matrix
@@ -25,11 +25,10 @@ class Shape(ABC):
     def _local_intersect(self, ray: Ray) -> Intersections:
         ...
 
-    def normal_at(self, point: Point) -> Vector:
-        local_point = self.transformation.inverse() * point
+    def normal_at(self, world_point: Point) -> Vector:
+        local_point = self.world_to_object(world_point)
         local_normal = self._local_normal_at(local_point)
-        world_x, world_y, world_z, _ = self.transformation.inverse().transpose() * local_normal
-        return Vector(world_x, world_y, world_z).normalize()
+        return self.normal_to_world(local_normal)
 
     @abstractmethod
     def _local_normal_at(self, point: Point) -> Vector:
@@ -48,6 +47,10 @@ class Shape(ABC):
             normal = self.parent.normal_to_world(normal)
 
         return normal
+
+    @abstractmethod
+    def bounds(self) -> BoundingBox:
+        ...
 
 
 class Sphere(Shape):
@@ -72,6 +75,9 @@ class Sphere(Shape):
     def _local_normal_at(self, point: Point) -> Vector:
         return point - self.origin
 
+    def bounds(self) -> BoundingBox:
+        return BoundingBox(Point(-1, -1, -1), Point(1, 1, 1))
+
     def __repr__(self):
         return f'Sphere(origin={self.origin} ref={self.material.refractive_index})'
 
@@ -86,6 +92,9 @@ class Plane(Shape):
     def _local_normal_at(self, point: Point) -> Vector:
         return Vector(0, 1, 0)
 
+    def bounds(self) -> BoundingBox:
+        return BoundingBox(Point(-INF, 0, -INF, Point(INF, 0, INF)))
+
 
 def _check_axis(origin: float, direction: float) -> (float, float):
     t_min_numerator = -1 - origin
@@ -95,8 +104,8 @@ def _check_axis(origin: float, direction: float) -> (float, float):
         t_min = t_min_numerator / direction
         t_max = t_max_numerator / direction
     else:
-        t_min = t_min_numerator * float('inf')
-        t_max = t_max_numerator * float('inf')
+        t_min = t_min_numerator * INF
+        t_max = t_max_numerator * INF
 
     if t_min > t_max:
         t_min, t_max = t_max, t_min
@@ -126,6 +135,9 @@ class Cube(Shape):
             return Intersections()
 
         return Intersections(Intersection(t_min, self), Intersection(t_max, self))
+
+    def bounds(self) -> BoundingBox:
+        return BoundingBox(Point(-1, -1, -1), Point(1, 1, 1))
 
 
 # Checks to see if the intersection at 't' is within a radius
@@ -162,8 +174,8 @@ def _calculate_intersections(a: float, b: float, c: float, ray: Ray, _object) ->
 class Cylinder(Shape):
     def __init__(self, closed: bool = False):
         super().__init__()
-        self.minimum = float('-inf')
-        self.maximum = float('inf')
+        self.minimum = -INF
+        self.maximum = INF
         self.closed = closed
 
     def _local_normal_at(self, point: Point) -> Vector:
@@ -207,12 +219,15 @@ class Cylinder(Shape):
 
         return xs
 
+    def bounds(self) -> BoundingBox:
+        return BoundingBox(Point(-1, self.minimum, -1), Point(1, self.maximum, 1))
+
 
 class Cone(Shape):
     def __init__(self, closed: bool = False):
         super().__init__()
-        self.minimum = float('-inf')
-        self.maximum = float('inf')
+        self.minimum = -INF
+        self.maximum = INF
         self.closed = closed
 
     def _local_intersect(self, ray: Ray) -> Intersections:
@@ -261,6 +276,9 @@ class Cone(Shape):
                 y = -y
             return Vector(point.x, y, point.z)
 
+    def bounds(self) -> BoundingBox:
+        return BoundingBox(Point(-1, self.minimum, -1), Point(1, self.maximum, 1))
+
 
 class Group(Shape):
     def __init__(self):
@@ -280,7 +298,7 @@ class Group(Shape):
         return self._collection[item]
 
     def _local_normal_at(self, point: Point) -> Vector:
-        pass
+        raise NotImplementedError
 
     def _local_intersect(self, ray: Ray) -> Intersections:
         xs = Intersections()
@@ -289,3 +307,13 @@ class Group(Shape):
         xs.sort()
         return xs
 
+    def bounds(self) -> BoundingBox:
+        pass
+
+
+# TODO: http://www.raytracerchallenge.com/bonus/bounding-boxes.html
+class BoundingBox:
+    def __init__(self, minimum: Point = Point(INF, INF, INF),
+                 maximum: Point = Point(-INF, -INF, -INF)):
+        self.minimum = minimum
+        self.maximum = maximum
