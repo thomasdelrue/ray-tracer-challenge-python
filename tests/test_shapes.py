@@ -1,7 +1,7 @@
 from math import sqrt, pi
 from raytracer import EPSILON
 from raytracer.materials import Material
-from raytracer.matrices import Matrix, translation, scaling, rotation_z
+from raytracer.matrices import Matrix, translation, scaling, rotation_z, rotation_y
 from raytracer.rays import Ray
 from raytracer.shapes import Shape, Sphere, Plane, Cube, Cylinder, Cone, Group
 from raytracer.tuples import Vector, Point
@@ -343,9 +343,68 @@ class TestGroups:
     def test_adding_child_to_group(self):
         g = Group()
         s = test_shape()
-        g.add_child(s)
+        g.add_children(s)
         assert not g.empty
         assert s in g
         assert s.parent == g
+
+    def test_intersect_ray_with_empty_group(self):
+        g = Group()
+        r = Ray(Point(0, 0, 0), Vector(0, 0, 1))
+        xs = g._local_intersect(r)
+        assert xs.count == 0
+
+    def test_intersect_ray_with_non_empty_group(self):
+        g = Group()
+        s1 = Sphere()
+        s2 = Sphere()
+        s2.transformation = translation(0, 0, -3)
+        s3 = Sphere()
+        s3.transformation = translation(5, 0, 0)
+        g.add_children(s1, s2, s3)
+        r = Ray(Point(0, 0, -5), Vector(0, 0, 1))
+        xs = g._local_intersect(r)
+        assert xs.count == 4
+        assert xs[0].object == s2
+        assert xs[1].object == s2
+        assert xs[2].object == s1
+        assert xs[3].object == s1
+
+    def test_intersect_transformed_group(self):
+        g = Group()
+        g.transformation = scaling(2, 2, 2)
+        s = Sphere()
+        s.transformation = translation(5, 0, 0)
+        g.add_children(s)
+        r = Ray(Point(10, 0, -10), Vector(0, 0, 1))
+        xs = g.intersect(r)
+        assert xs.count == 2
+
+    def test_convert_point_from_world_to_object_space(self):
+        g1 = Group()
+        g1.transformation = rotation_y(pi / 2)
+        g2 = Group()
+        g2.transformation = scaling(2, 2, 2)
+        g1.add_children(g2)
+
+        s = Sphere()
+        s.transformation = translation(5, 0, 0)
+        g2.add_children(s)
+        p = s.world_to_object(Point(-2, 0, -10))
+        assert p == Point(0, 0, -1)
+
+    def test_convert_normal_from_object_to_world_space(self):
+        g1 = Group()
+        g1.transformation = rotation_y(pi / 2)
+        g2 = Group()
+        g2.transformation = scaling(1, 2, 3)
+        g1.add_children(g2)
+
+        s = Sphere()
+        s.transformation = translation(5, 0, 0)
+        g2.add_children(s)
+        n = s.normal_to_world(Vector(sqrt(3) / 3, sqrt(3) / 3, sqrt(3) / 3))
+        assert n == Vector(0.28571, 0.42857, -0.85714)
+
 
 

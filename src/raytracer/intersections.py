@@ -48,22 +48,29 @@ class Computations:
 class Intersections:
     def __init__(self, *intersections):
         self._collection = sorted(intersections, key=lambda intersection: intersection.t)
+        self._sorted = True
 
     @property
     def count(self):
         return len(self._collection)
 
-    def append(self, intersection: Intersection):
+    def append(self, intersection: Intersection, to_sort: bool = True):
         self._collection.append(intersection)
-        self._sort()
+        self._sorted = False
+        if to_sort:
+            self.sort()
 
-    def extend(self, intersections: Intersections):
+    def extend(self, intersections: Intersections, to_sort: bool = True):
         for intersection in intersections:
             self._collection.append(intersection)
-        self._sort()
+        self._sorted = False
+        if to_sort:
+            self.sort()
 
-    def _sort(self):
-        self._collection = sorted(self._collection, key=lambda x: x.t)
+    def sort(self):
+        if not self._sorted:
+            self._collection = sorted(self._collection, key=lambda x: x.t)
+            self._sorted = True
 
     def __getitem__(self, item) -> Intersection:
         return self._collection[item]

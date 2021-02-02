@@ -1,5 +1,6 @@
+from __future__ import annotations
 from abc import ABC, abstractmethod
-from typing import List
+from typing import List, Optional
 from . import EPSILON
 from .intersections import Intersection, Intersections
 from .materials import Material
@@ -14,7 +15,7 @@ class Shape(ABC):
         self.origin = Point(0, 0, 0)
         self.transformation = Matrix.identity()
         self.material = Material()
-        self.parent: Shape = None
+        self.parent: Optional[Shape] = None
 
     def intersect(self, ray: Ray) -> Intersections:
         local_ray = ray.transform(self.transformation.inverse())
@@ -33,6 +34,20 @@ class Shape(ABC):
     @abstractmethod
     def _local_normal_at(self, point: Point) -> Vector:
         ...
+
+    def world_to_object(self, point: Point) -> Point:
+        if self.parent:
+            point = self.parent.world_to_object(point)
+        return self.transformation.inverse() * point
+
+    def normal_to_world(self, normal: Vector) -> Vector:
+        x, y, z, _ = self.transformation.inverse().transpose() * normal
+        normal = Vector(x, y, z).normalize()
+
+        if self.parent:
+            normal = self.parent.normal_to_world(normal)
+
+        return normal
 
 
 class Sphere(Shape):
@@ -256,9 +271,10 @@ class Group(Shape):
     def empty(self):
         return len(self._collection) == 0
 
-    def add_child(self, child: Shape):
-        child.parent = self
-        self._collection.append(child)
+    def add_children(self, *children: Shape):
+        for child in children:
+            child.parent = self
+            self._collection.append(child)
 
     def __getitem__(self, item) -> Shape:
         return self._collection[item]
@@ -267,4 +283,9 @@ class Group(Shape):
         pass
 
     def _local_intersect(self, ray: Ray) -> Intersections:
-        pass
+        xs = Intersections()
+        for _object in self:
+            xs.extend(_object.intersect(ray), to_sort=False)
+        xs.sort()
+        return xs
+
