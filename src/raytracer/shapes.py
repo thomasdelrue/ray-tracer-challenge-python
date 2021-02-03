@@ -93,7 +93,7 @@ class Plane(Shape):
         return Vector(0, 1, 0)
 
     def bounds(self) -> BoundingBox:
-        return BoundingBox(Point(-INF, 0, -INF, Point(INF, 0, INF)))
+        return BoundingBox(Point(-INF, 0, -INF), Point(INF, 0, INF))
 
 
 def _check_axis(origin: float, direction: float) -> (float, float):
@@ -277,7 +277,8 @@ class Cone(Shape):
             return Vector(point.x, y, point.z)
 
     def bounds(self) -> BoundingBox:
-        return BoundingBox(Point(-1, self.minimum, -1), Point(1, self.maximum, 1))
+        limit = max(abs(self.minimum), abs(self.maximum))
+        return BoundingBox(Point(-limit, self.minimum, -limit), Point(limit, self.maximum, limit))
 
 
 class Group(Shape):
@@ -317,3 +318,14 @@ class BoundingBox:
                  maximum: Point = Point(-INF, -INF, -INF)):
         self.minimum = minimum
         self.maximum = maximum
+
+    def include(self, p: Point) -> None:
+        x, y, z = min(self.minimum.x, p.x), min(self.minimum.y, p.y), min(self.minimum.z, p.z)
+        self.minimum = Point(x, y, z)
+        x, y, z = max(self.maximum.x, p.x), max(self.maximum.y, p.y), max(self.maximum.z, p.z)
+        self.maximum = Point(x, y, z)
+
+    def merge(self, box: BoundingBox) -> None:
+        self.include(box.minimum)
+        self.include(box.maximum)
+

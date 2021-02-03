@@ -1,11 +1,10 @@
 from math import sqrt, pi
-from raytracer import INF
-from raytracer.materials import Material
-from raytracer.matrices import Matrix, translation, scaling, rotation_z, rotation_y
-from raytracer.rays import Ray
+
+import pytest
+
+from raytracer.matrices import translation, scaling, rotation_z, rotation_y
 from raytracer.shapes import *
 from raytracer.tuples import Vector, Point
-import pytest
 
 
 def test_shape():
@@ -72,6 +71,12 @@ class TestShapes:
         s.transformation = scaling(1, 0.5, 1) * rotation_z(pi / 5)
         n = s.normal_at(Point(0, sqrt(2) / 2, -sqrt(2) / 2))
         assert n == Vector(0, 0.97014, -0.24254)
+
+    def test_shape_has_bounds(self):
+        s = test_shape()
+        box = s.bounds()
+        assert box.minimum == Point(-1, -1, -1)
+        assert box.maximum == Point(1, 1, 1)
 
 
 class TestSpheres:
@@ -150,6 +155,12 @@ class TestSpheres:
         s = Sphere()
         assert isinstance(s, Shape)
 
+    def test_sphere_has_bounding_box(self):
+        s = Sphere()
+        box = s.bounds()
+        assert box.minimum == Point(-1, -1, -1)
+        assert box.maximum == Point(1, 1, 1)
+
 
 class TestPlanes:
     def test_normal_of_plane_is_constant_everywhere(self):
@@ -189,6 +200,14 @@ class TestPlanes:
         assert xs[0].t == 1
         assert xs[0].object == p
 
+    def test_plane_has_bounding_box(self):
+        p = Plane()
+        box = p.bounds()
+        x, y, z, _ = box.minimum
+        assert (x, y, z) == (-INF, 0, -INF)
+        x, y, z, _ = box.maximum
+        assert (x, y, z) == (INF, 0, INF)
+
 
 class TestCubes:
     @pytest.mark.parametrize("point, normal", [(Point(1, 0.5, -0.8), Vector(1, 0, 0)),
@@ -204,6 +223,12 @@ class TestCubes:
         p = point
         result = c._local_normal_at(p)
         assert result == normal
+
+    def test_cube_has_bounding_box(self):
+        c = Cube()
+        box = c.bounds()
+        assert box.minimum == Point(-1, -1, -1)
+        assert box.maximum == Point(1, 1, 1)
 
 
 class TestCylinders:
@@ -290,6 +315,22 @@ class TestCylinders:
         n = c._local_normal_at(point)
         assert n == normal
 
+    def test_unbounded_cylinder_has_bounding_box(self):
+        c = Cylinder()
+        box = c.bounds()
+        x, y, z, _ = box.minimum
+        assert (x, y, z) == (-1, -INF, -1)
+        x, y, z, _ = box.maximum
+        assert (x, y, z) == (1, INF, 1)
+
+    def test_bounded_cylinder_has_bounding_box(self):
+        c = Cylinder()
+        c.minimum = -5
+        c.maximum = 3
+        box = c.bounds()
+        assert box.minimum == Point(-1, -5, -1)
+        assert box.maximum == Point(1, 3, 1)
+
 
 class TestCones:
     @pytest.mark.parametrize("origin, direction, t0, t1", [(Point(0, 0, -5), Vector(0, 0, 1), 5, 5),
@@ -331,6 +372,22 @@ class TestCones:
         shape = Cone()
         n = shape._local_normal_at(point)
         assert n == normal
+
+    def test_unbounded_cone_has_bounding_box(self):
+        c = Cone()
+        box = c.bounds()
+        x, y, z, _ = box.minimum
+        assert (x, y, z) == (-INF, -INF, -INF)
+        x, y, z, _ = box.maximum
+        assert (x, y, z) == (INF, INF, INF)
+
+    def test_bounded_cone_has_bounding_box(self):
+        c = Cone()
+        c.minimum = -5
+        c.maximum = 3
+        box = c.bounds()
+        assert box.minimum == Point(-5, -5, -5)
+        assert box.maximum == Point(5, 3, 5)
 
 
 class TestGroups:
@@ -431,3 +488,23 @@ class TestBoundingBoxes:
         x, y, z, _ = box.maximum
         assert (x, y, z) == (-INF, -INF, -INF)
 
+    def test_create_bounding_box_with_volume(self):
+        box = BoundingBox(Point(-1, -2, -3), Point(3, 2, 1))
+        assert box.minimum == Point(-1, -2, -3)
+        assert box.maximum == Point(3, 2, 1)
+
+    def test_adding_points_to_empty_bounding_box(self):
+        box = BoundingBox()
+        p1 = Point(-5, 2, 0)
+        p2 = Point(7, 0, -3)
+        box.include(p1)
+        box.include(p2)
+        assert box.minimum == Point(-5, 0, -3)
+        assert box.maximum == Point(7, 2, 0)
+
+    def test_merge_bounding_box_in_another(self):
+        box1 = BoundingBox(Point(-5, -2, 0), Point(7, 4, 4))
+        box2 = BoundingBox(Point(8, -7, -2), Point(14, 2, 8))
+        box1.merge(box2)
+        assert box1.minimum == Point(-5, -7, -2)
+        assert box1.maximum == Point(14, 4, 8)

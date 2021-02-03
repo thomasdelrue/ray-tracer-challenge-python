@@ -36,7 +36,7 @@ def hexagon():
         side = hexagon_side()
         side.transformation = rotation_y(n * pi / 3)
         _hex.add_children(side)
-    _hex.transformation = translation(0, 1, 0)
+    _hex.transformation = rotation_x(-pi / 6) * translation(0, 1, 0)
     return _hex
 
 
