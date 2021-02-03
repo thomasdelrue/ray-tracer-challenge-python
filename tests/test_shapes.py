@@ -2,7 +2,7 @@ from math import sqrt, pi
 
 import pytest
 
-from raytracer.matrices import translation, scaling, rotation_z, rotation_y
+from raytracer.matrices import translation, scaling, rotation_z, rotation_y, rotation_x
 from raytracer.shapes import *
 from raytracer.tuples import Vector, Point
 
@@ -479,6 +479,20 @@ class TestGroups:
         n = s.normal_at(Point(1.7321, 1.1547, -5.5774))
         assert n == Vector(0.28570, 0.42854, -0.85716)
 
+    def test_group_has_bounding_box_containing_its_children(self):
+        s = Sphere()
+        s.transformation = translation(2, 5, -3) * scaling(2, 2, 2)
+        c = Cylinder()
+        c.minimum = -2
+        c.maximum = 2
+        c.transformation = translation(-4, -1, 4) * scaling(0.5, 1, 0.5)
+        group = Group()
+        group.add_children(s, c)
+
+        box = group.bounds()
+        assert box.minimum == Point(-4.5, -3, -5)
+        assert box.maximum == Point(4, 7, 4.5)
+
 
 class TestBoundingBoxes:
     def test_create_empty_bounding_box(self):
@@ -508,3 +522,38 @@ class TestBoundingBoxes:
         box1.merge(box2)
         assert box1.minimum == Point(-5, -7, -2)
         assert box1.maximum == Point(14, 4, 8)
+
+    @pytest.mark.parametrize("point, result", [(Point(5, -2, 0), True),
+                                               (Point(11, 4, 7), True),
+                                               (Point(8, 1, 3), True),
+                                               (Point(3, 0, 3), False),
+                                               (Point(8, -4, 3), False),
+                                               (Point(8, 1, -1), False),
+                                               (Point(13, 1, 3), False),
+                                               (Point(8, 5, 3), False),
+                                               (Point(8, 1, 8), False)])
+    def test_check_box_contains_given_point(self, point, result):
+        box = BoundingBox(Point(5, -2, 0), Point(11, 4, 7))
+        assert box.contains_point(point) is result
+
+    @pytest.mark.parametrize("minimum, maximum, result", [(Point(5, -2, 0), Point(11, 4, 7), True),
+                                                  (Point(6, -1, 1), Point(10, 3, 6), True),
+                                                  (Point(4, -3, 1), Point(10, 3, 6), False),
+                                                  (Point(6, -1, 1), Point(12, 5, 8), False)])
+    def test_check_box_contains_given_box(self, minimum, maximum, result):
+        box = BoundingBox(Point(5, -2, 0), Point(11, 4, 7))
+        box2 = BoundingBox(minimum, maximum)
+        assert box.contains_box(box2) is result
+
+    def test_transforming_bounding_box(self):
+        box = BoundingBox(Point(-1, -1, -1), Point(1, 1, 1))
+        box2 = box.transform(rotation_x(pi / 4) * rotation_y(pi / 4))
+        assert box2.minimum == Point(-1.41421, -1.70711, -1.70711)
+        assert box2.maximum == Point(1.41421, 1.70711, 1.70711)
+
+    def test_query_shape_bounding_box_in_parent_space(self):
+        s = Sphere()
+        s.transformation = translation(1, -3, 5) * scaling(0.5, 2, 4)
+        box = s.parent_space_bounds()
+        assert box.minimum == Point(0.5, -5, 1)
+        assert box.maximum == Point(1.5, -1, 9)

@@ -7,6 +7,7 @@ from .materials import Material
 from .matrices import Matrix
 from .rays import Ray
 from .tuples import Point, Vector, dot
+import itertools
 import math
 
 
@@ -51,6 +52,9 @@ class Shape(ABC):
     @abstractmethod
     def bounds(self) -> BoundingBox:
         ...
+
+    def parent_space_bounds(self) -> BoundingBox:
+        return self.bounds().transform(self.transformation)
 
 
 class Sphere(Shape):
@@ -309,10 +313,12 @@ class Group(Shape):
         return xs
 
     def bounds(self) -> BoundingBox:
-        pass
+        box = BoundingBox()
+        for child in self:
+            box.merge(child.parent_space_bounds())
+        return box
 
 
-# TODO: http://www.raytracerchallenge.com/bonus/bounding-boxes.html
 class BoundingBox:
     def __init__(self, minimum: Point = Point(INF, INF, INF),
                  maximum: Point = Point(-INF, -INF, -INF)):
@@ -328,4 +334,21 @@ class BoundingBox:
     def merge(self, box: BoundingBox) -> None:
         self.include(box.minimum)
         self.include(box.maximum)
+
+    def contains_point(self, point: Point) -> bool:
+        return self.minimum.x <= point.x <= self.maximum.x and \
+               self.minimum.y <= point.y <= self.maximum.y and \
+               self.minimum.z <= point.z <= self.maximum.z
+
+    def contains_box(self, box: BoundingBox) -> bool:
+        return self.contains_point(box.minimum) and self.contains_point(box.maximum)
+
+    def transform(self, matrix: Matrix):
+        edges = [Point(x, y, z) for x, y, z in itertools.product((self.minimum.x, self.maximum.x),
+                                                                 (self.minimum.y, self.maximum.y),
+                                                                 (self.minimum.z, self.maximum.z))]
+        new_box = BoundingBox()
+        for edge in edges:
+            new_box.include(matrix * edge)
+        return new_box
 
