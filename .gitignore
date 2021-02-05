@@ -1,3 +1,4 @@
 .idea
 resources
 **/__pycache__
+/ray-tracer-challenge-python.iml

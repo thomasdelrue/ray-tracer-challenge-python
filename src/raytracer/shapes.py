@@ -100,9 +100,9 @@ class Plane(Shape):
         return BoundingBox(Point(-INF, 0, -INF), Point(INF, 0, INF))
 
 
-def _check_axis(origin: float, direction: float) -> (float, float):
-    t_min_numerator = -1 - origin
-    t_max_numerator = 1 - origin
+def _check_axis(origin: float, direction: float, _min: float = 1, _max: float = 1) -> (float, float):
+    t_min_numerator = _min - origin
+    t_max_numerator = _max - origin
 
     if abs(direction) >= EPSILON:
         t_min = t_min_numerator / direction
@@ -118,6 +118,11 @@ def _check_axis(origin: float, direction: float) -> (float, float):
 
 
 class Cube(Shape):
+    def __init__(self):
+        super().__init__()
+        self.minimum = Point(-1, -1, -1)
+        self.maximum = Point(1, 1, 1)
+
     def _local_normal_at(self, point: Point) -> Vector:
         max_c = max(abs(point.x), abs(point.y), abs(point.z))
         if max_c == abs(point.x):
@@ -128,9 +133,9 @@ class Cube(Shape):
             return Vector(0, 0, point.z)
 
     def _local_intersect(self, ray: Ray):
-        xt_min, xt_max = _check_axis(ray.origin.x, ray.direction.x)
-        yt_min, yt_max = _check_axis(ray.origin.y, ray.direction.y)
-        zt_min, zt_max = _check_axis(ray.origin.z, ray.direction.z)
+        xt_min, xt_max = _check_axis(ray.origin.x, ray.direction.x, self.minimum.x, self.maximum.x)
+        yt_min, yt_max = _check_axis(ray.origin.y, ray.direction.y, self.minimum.y, self.maximum.y)
+        zt_min, zt_max = _check_axis(ray.origin.z, ray.direction.z, self.minimum.z, self.maximum.z)
 
         t_min = max(xt_min, yt_min, zt_min)
         t_max = min(xt_max, yt_max, zt_max)
@@ -307,6 +312,9 @@ class Group(Shape):
 
     def _local_intersect(self, ray: Ray) -> Intersections:
         xs = Intersections()
+        if self.bounds().intersect(ray).count == 0:
+            return xs
+
         for _object in self:
             xs.extend(_object.intersect(ray), to_sort=False)
         xs.sort()
@@ -319,9 +327,10 @@ class Group(Shape):
         return box
 
 
-class BoundingBox:
+class BoundingBox(Cube):
     def __init__(self, minimum: Point = Point(INF, INF, INF),
                  maximum: Point = Point(-INF, -INF, -INF)):
+        super().__init__()
         self.minimum = minimum
         self.maximum = maximum
 

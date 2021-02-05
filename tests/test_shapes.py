@@ -9,8 +9,13 @@ from raytracer.tuples import Vector, Point
 
 def test_shape():
     class TestShape(Shape):
+        def __init__(self):
+            super().__init__()
+            self.saved_ray = None
+
         def _local_intersect(self, ray: Ray):
             self.saved_ray = ray
+            return Intersections()
 
         def _local_normal_at(self, point: Point) -> Vector:
             return Vector(point.x, point.y, point.z)
@@ -557,3 +562,59 @@ class TestBoundingBoxes:
         box = s.parent_space_bounds()
         assert box.minimum == Point(0.5, -5, 1)
         assert box.maximum == Point(1.5, -1, 9)
+
+    @pytest.mark.parametrize("origin, direction, result", [(Point(5, 0.5, 0), Vector(-1, 0, 0), True),
+                                                           (Point(-5, 0.5, 0), Vector(1, 0, 0), True),
+                                                           (Point(0.5, 5, 0), Vector(0, -1, 0), True),
+                                                           (Point(0.5, -5, 0), Vector(0, 1, 0), True),
+                                                           (Point(0.5, 0, 5), Vector(0, 0, -1), True),
+                                                           (Point(0.5, 0, -5), Vector(0, 0, 1), True),
+                                                           (Point(0, 0.5, 0), Vector(0, 0, 1), True),
+                                                           (Point(-2, 0, 0), Vector(2, 4, 6), False),
+                                                           (Point(0, -2, 0), Vector(6, 2, 4), False),
+                                                           (Point(0, 0, -2), Vector(4, 6, 2), False),
+                                                           (Point(2, 0, 2), Vector(0, 0, -1), False),
+                                                           (Point(0, 2, 2), Vector(0, -1, 0), False),
+                                                           (Point(2, 2, 0), Vector(-1, 0, 0), False)])
+    def test_intersect_ray_with_bounding_box_at_origin(self, origin, direction, result):
+        box = BoundingBox(Point(-1, -1, -1), Point(1, 1, 1))
+        norm_direction = direction.normalize()
+        r = Ray(origin, norm_direction)
+        xs = box.intersect(r)
+        assert (xs.count > 0) is result
+
+    @pytest.mark.parametrize("origin, direction, result", [(Point(15, 1, 2), Vector(-1, 0, 0), True),
+                                                           (Point(-5, -1, 4), Vector(1, 0, 0), True),
+                                                           (Point(7, 6, 5), Vector(0, -1, 0), True),
+                                                           (Point(9, -5, 6), Vector(0, 1, 0), True),
+                                                           (Point(8, 2, 12), Vector(0, 0, -1), True),
+                                                           (Point(6, 0, -5), Vector(0, 0, 1), True),
+                                                           (Point(8, 1, 3.5), Vector(0, 0, 1), True),
+                                                           (Point(9, -1, -8), Vector(2, 4, 6), False),
+                                                           (Point(8, 3, -4), Vector(6, 2, 4), False),
+                                                           (Point(9, -1, -2), Vector(4, 6, 2), False),
+                                                           (Point(4, 0, 9), Vector(0, 0, -1), False),
+                                                           (Point(8, 6, -1), Vector(0, -1, 0), False),
+                                                           (Point(12, 5, 4), Vector(-1, 0, 0), False)])
+    def test_intersect_ray_with_non_cubic_bounding_box(self, origin, direction, result):
+        box = BoundingBox(Point(5, -2, 0), Point(11, 4, 7))
+        norm_direction = direction.normalize()
+        r = Ray(origin, norm_direction)
+        xs = box.intersect(r)
+        assert (xs.count > 0) is result
+
+    def test_intersect_ray_group_doesnt_test_children_if_box_is_missed(self):
+        child = test_shape()
+        g = Group()
+        g.add_children(child)
+        r = Ray(Point(0, 0, -5), Vector(0, 1, 0))
+        xs = g.intersect(r)
+        assert not child.saved_ray
+
+    def test_intersect_ray_group_test_children_if_box_is_hit(self):
+        child = test_shape()
+        g = Group()
+        g.add_children(child)
+        r = Ray(Point(0, 0, -5), Vector(0, 0, 1))
+        xs = g.intersect(r)
+        assert child.saved_ray
