@@ -1,4 +1,4 @@
 .idea
-resources
+/resources
 **/__pycache__
 /ray-tracer-challenge-python.iml

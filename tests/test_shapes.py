@@ -618,3 +618,66 @@ class TestBoundingBoxes:
         r = Ray(Point(0, 0, -5), Vector(0, 0, 1))
         xs = g.intersect(r)
         assert child.saved_ray
+
+
+class TestTriangles:
+    def test_constructing_triangle(self):
+        p1 = Point(0, 1, 0)
+        p2 = Point(-1, 0, 0)
+        p3 = Point(1, 0, 0)
+        t = Triangle(p1, p2, p3)
+        assert t.p1 == p1
+        assert t.p2 == p2
+        assert t.p3 == p3
+        assert t.e1 == Vector(-1, -1, 0)
+        assert t.e2 == Vector(1, -1, 0)
+        assert t.normal == Vector(0, 0, -1)
+
+    def test_finding_normal_on_triangle(self):
+        t = Triangle(Point(0, 1, 0), Point(-1, 0, 0), Point(1, 0, 0))
+        n1 = t._local_normal_at(Point(0, 0.5, 0))
+        n2 = t._local_normal_at(Point(-0.5, 0.75, 0))
+        n3 = t._local_normal_at(Point(0.5, 0.25, 0))
+        assert n1 == t.normal
+        assert n2 == t.normal
+        assert n3 == t.normal
+
+    def test_triangle_has_bounded_box(self):
+        p1 = Point(-3, 7, 2)
+        p2 = Point(6, 2, -4)
+        p3 = Point(2, -1, -1)
+        t = Triangle(p1, p2, p3)
+        box = t.bounds()
+        assert box.minimum == Point(-3, -1, -4)
+        assert box.maximum == Point(6, 7, 2)
+
+    def test_intersect_ray_parallel_to_triangle(self):
+        t = Triangle(Point(0, 1, 0), Point(-1, 0, 0), Point(1, 0, 0))
+        r = Ray(Point(0, -1, -2), Vector(0, 1, 0))
+        xs = t._local_intersect(r)
+        assert xs.count == 0
+
+    def test_ray_misses_p1_p3_edge(self):
+        t = Triangle(Point(0, 1, 0), Point(-1, 0, 0), Point(1, 0, 0))
+        r = Ray(Point(1, 1, -2), Vector(0, 0, 1))
+        xs = t._local_intersect(r)
+        assert xs.count == 0
+
+    def test_ray_misses_p1_p2_edge(self):
+        t = Triangle(Point(0, 1, 0), Point(-1, 0, 0), Point(1, 0, 0))
+        r = Ray(Point(-1, 1, -2), Vector(0, 0, 1))
+        xs = t._local_intersect(r)
+        assert xs.count == 0
+
+    def test_ray_misses_p2_p3_edge(self):
+        t = Triangle(Point(0, 1, 0), Point(-1, 0, 0), Point(1, 0, 0))
+        r = Ray(Point(0, -1, -2), Vector(0, 0, 1))
+        xs = t._local_intersect(r)
+        assert xs.count == 0
+
+    def test_ray_strikes_triangle(self):
+        t = Triangle(Point(0, 1, 0), Point(-1, 0, 0), Point(1, 0, 0))
+        r = Ray(Point(0, 0.5, -2), Vector(0, 0, 1))
+        xs = t._local_intersect(r)
+        assert xs.count == 1
+        assert xs[0].t == 2
