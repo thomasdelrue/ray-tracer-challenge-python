@@ -304,8 +304,8 @@ class Group(Shape):
             child.parent = self
             self._collection.append(child)
 
-    def __getitem__(self, item) -> Shape:
-        return self._collection[item]
+    def __getitem__(self, index) -> Shape:
+        return self._collection[index]
 
     def _local_normal_at(self, point: Point) -> Vector:
         raise NotImplementedError
