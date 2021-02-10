@@ -1,17 +1,17 @@
+import pprint
 from copy import copy
 from os import sep
+
 from yaml import load
+
+import raytracer
 from raytracer.camera import Camera
 from raytracer.canvas import write_ppm_to_file
 from raytracer.lights import PointLight
-from raytracer.materials import Material
 from raytracer.matrices import *
 from raytracer.scene import World
 from raytracer.shapes import *
 from raytracer.tuples import *
-
-import pprint
-import raytracer
 
 constants = {}
 
@@ -91,12 +91,6 @@ if __name__ == '__main__':
                 constants[element['define']] = build_transformation(element, 'value')
         else:
             world.add(build_shape(element))
-
-    # print('Parsed constants:')
-    # pprint.pprint(constants)
-    #
-    # print('World object:')
-    # pprint.pprint(world.objects)
 
     canvas = camera.render(world)
 
