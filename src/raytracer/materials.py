@@ -63,3 +63,7 @@ class Material:
                     specular = light.intensity * self.specular * factor
 
         return ambient + diffuse + specular
+
+    def __repr__(self):
+        return f'Material({self.color}, d:{self.diffuse}, a:{self.ambient}' \
+               f', s:{self.specular}, r:{self.reflective})'
