@@ -1,5 +1,6 @@
 from __future__ import annotations
 from abc import ABC, abstractmethod
+from enum import Enum
 from typing import List, Optional
 from . import EPSILON, INF
 from .intersections import Intersection, Intersections
@@ -55,6 +56,9 @@ class Shape(ABC):
 
     def parent_space_bounds(self) -> BoundingBox:
         return self.bounds().transform(self.transformation)
+
+    def includes(self, shape: Shape) -> bool:
+        return self == shape
 
 
 class Sphere(Shape):
@@ -327,6 +331,9 @@ class Group(Shape):
             box.merge(child.parent_space_bounds())
         return box
 
+    def includes(self, shape: Shape) -> bool:
+        return any([child.includes(shape) for child in self])
+
 
 class BoundingBox(Cube):
     def __init__(self, minimum: Point = Point(INF, INF, INF),
@@ -415,3 +422,65 @@ class SmoothTriangle(Triangle):
         x, y, z, _ = self.n2 * hit.u + self.n3 * hit.v + self.n1 * (1 - hit.u - hit.v)
         return Vector(x, y, z)
 
+
+class OperationType(Enum):
+    UNION = "union"
+    INTERSECTION = "intersection"
+    DIFFERENCE = "difference"
+
+    def intersection_allowed(self, left_hit: bool, inside_left: bool,
+                             inside_right: bool) -> bool:
+        if self.value == 'union':
+            return (left_hit and not inside_right) or (not left_hit and not inside_left)
+        elif self.value == 'intersection':
+            return (left_hit and inside_right) or (not left_hit and inside_left)
+        elif self.value == 'difference':
+            return (left_hit and not inside_right) or (not left_hit and inside_left)
+        return False
+
+
+class Csg(Shape):
+    def __init__(self, operation: OperationType, left: Shape, right: Shape):
+        super().__init__()
+        self.operation = operation
+        left.parent = self
+        self.left = left
+        right.parent = self
+        self.right = right
+
+    def filter_intersections(self, xs: Intersections) -> Intersections:
+        # begin outside both children
+        inside_left = False
+        inside_right = False
+        result = Intersections()
+        for i in xs:
+            left_hit = self.left.includes(i.object)
+
+            if self.operation.intersection_allowed(left_hit, inside_left, inside_right):
+                result.append(i, False)
+
+            # depending on which object was hit, toggle either inside_left or inside_right
+            if left_hit:
+                inside_left = not inside_left
+            else:
+                inside_right = not inside_right
+
+        result.sort()
+        return result
+
+    def _local_intersect(self, ray: Ray) -> Intersections:
+        xs = self.left.intersect(ray)
+        xs.extend(self.right.intersect(ray))
+        return self.filter_intersections(xs)
+
+    def _local_normal_at(self, point: Point, hit: Intersection = None) -> Vector:
+        raise NotImplementedError
+
+    def bounds(self) -> BoundingBox:
+        box = BoundingBox()
+        box.merge(self.left.parent_space_bounds())
+        box.merge(self.right.parent_space_bounds())
+        return box
+
+    def includes(self, shape: Shape) -> bool:
+        return self.left.includes(shape) or self.right.includes(shape)

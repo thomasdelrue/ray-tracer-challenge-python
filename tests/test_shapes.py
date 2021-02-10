@@ -720,3 +720,85 @@ class TestSmoothTriangles:
         comps = x.prepare_computations(r, xs)
         assert comps.normalv == Vector(-0.5547, 0.83205, 0)
 
+
+class TestCsg:
+    def test_constructing_csg(self):
+        s1 = Sphere()
+        s2 = Cube()
+        c = Csg(OperationType.UNION, s1, s2)
+        assert c.operation == OperationType.UNION
+        assert c.left == s1
+        assert c.right == s2
+        assert s1.parent == c
+        assert s2.parent == c
+
+    @pytest.mark.parametrize("op, lhit, inl, inr, result", [
+        ("union", True, True, True, False),
+        ("union", True, True, False, True),
+        ("union", True, False, True, False),
+        ("union", True, False, False, True),
+        ("union", False, True, True, False),
+        ("union", False, True, False, False),
+        ("union", False, False, True, True),
+        ("union", False, False, False, True),
+        ("intersection", True, True, True, True),
+        ("intersection", True, True, False, False),
+        ("intersection", True, False, True, True),
+        ("intersection", True, False, False, False),
+        ("intersection", False, True, True, True),
+        ("intersection", False, True, False, True),
+        ("intersection", False, False, True, False),
+        ("intersection", False, False, False, False),
+        ("difference", True, True, True, False),
+        ("difference", True, True, False, True),
+        ("difference", True, False, True, False),
+        ("difference", True, False, False, True),
+        ("difference", False, True, True, True),
+        ("difference", False, True, False, True),
+        ("difference", False, False, True, False),
+        ("difference", False, False, False, False)
+    ])
+    def test_evaluating_rule_for_csg_operation(self, op, lhit, inl, inr, result):
+        assert OperationType(op).intersection_allowed(lhit, inl, inr) is result
+
+    @pytest.mark.parametrize("operation, x0, x1", [("union", 0, 3),
+                                                   ("intersection", 1, 2),
+                                                   ("difference", 0, 1)])
+    def test_filtering_list_of_intersections(self, operation, x0, x1):
+        s1 = Sphere()
+        s2 = Cube()
+        c = Csg(OperationType(operation), s1, s2)
+        xs = Intersections(Intersection(1, s1), Intersection(2, s2),
+                           Intersection(3, s1), Intersection(4, s2))
+        result = c.filter_intersections(xs)
+        assert result.count == 2
+        assert result[0] == xs[x0]
+        assert result[1] == xs[x1]
+
+    def test_ray_misses_csg(self):
+        c = Csg(OperationType.UNION, Sphere(), Cube())
+        r = Ray(Point(0, 2, -5), Vector(0, 0, 1))
+        xs = c._local_intersect(r)
+        assert xs.count == 0
+
+    def test_ray_hits_csg(self):
+        s1 = Sphere()
+        s2 = Sphere()
+        s2.transformation = translation(0, 0, 0.5)
+        c = Csg(OperationType.UNION, s1, s2)
+        r = Ray(Point(0, 0, -5), Vector(0, 0, 1))
+        xs = c._local_intersect(r)
+        assert xs.count == 2
+        assert xs[0].t == 4
+        assert xs[0].object == s1
+        assert xs[1].t == 6.5
+        assert xs[1].object == s2
+
+    def test_csg_has_bounding_box_that_contains_its_children(self):
+        left = Sphere()
+        right = Sphere()
+        right.transformation = translation(2, 3, 4)
+        c = Csg(OperationType.DIFFERENCE, left, right)
+        box = c.bounds()
+        assert box.minimum == Point(-1, -1, -1)
+        assert box.maximum == Point(3, 4, 5)
