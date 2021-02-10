@@ -26,13 +26,13 @@ class Shape(ABC):
     def _local_intersect(self, ray: Ray) -> Intersections:
         ...
 
-    def normal_at(self, world_point: Point) -> Vector:
+    def normal_at(self, world_point: Point, hit: Intersection = None) -> Vector:
         local_point = self.world_to_object(world_point)
-        local_normal = self._local_normal_at(local_point)
+        local_normal = self._local_normal_at(local_point, hit)
         return self.normal_to_world(local_normal)
 
     @abstractmethod
-    def _local_normal_at(self, point: Point) -> Vector:
+    def _local_normal_at(self, point: Point, hit: Intersection = None) -> Vector:
         ...
 
     def world_to_object(self, point: Point) -> Point:
@@ -76,7 +76,7 @@ class Sphere(Shape):
         t2 = (-b + math.sqrt(discriminant)) / (2 * a)
         return Intersections(Intersection(t1, self), Intersection(t2, self))
 
-    def _local_normal_at(self, point: Point) -> Vector:
+    def _local_normal_at(self, point: Point, hit: Intersection = None) -> Vector:
         return point - self.origin
 
     def bounds(self) -> BoundingBox:
@@ -93,7 +93,7 @@ class Plane(Shape):
         t = -ray.origin.y / ray.direction.y
         return Intersections(Intersection(t, self))
 
-    def _local_normal_at(self, point: Point) -> Vector:
+    def _local_normal_at(self, point: Point, hit: Intersection = None) -> Vector:
         return Vector(0, 1, 0)
 
     def bounds(self) -> BoundingBox:
@@ -123,7 +123,7 @@ class Cube(Shape):
         self.minimum = Point(-1, -1, -1)
         self.maximum = Point(1, 1, 1)
 
-    def _local_normal_at(self, point: Point) -> Vector:
+    def _local_normal_at(self, point: Point, hit: Intersection = None) -> Vector:
         max_c = max(abs(point.x), abs(point.y), abs(point.z))
         if max_c == abs(point.x):
             return Vector(point.x, 0, 0)
@@ -187,7 +187,7 @@ class Cylinder(Shape):
         self.maximum = INF
         self.closed = closed
 
-    def _local_normal_at(self, point: Point) -> Vector:
+    def _local_normal_at(self, point: Point, hit: Intersection = None) -> Vector:
         dist = point.x ** 2 + point.z ** 2
 
         if dist < 1 and point.y >= self.maximum - EPSILON:
@@ -272,7 +272,7 @@ class Cone(Shape):
 
         return xs
 
-    def _local_normal_at(self, point: Point) -> Vector:
+    def _local_normal_at(self, point: Point, hit: Intersection = None) -> Vector:
         dist = point.x ** 2 + point.z ** 2
 
         if dist < 1 and point.y >= self.maximum - EPSILON:
@@ -291,9 +291,10 @@ class Cone(Shape):
 
 
 class Group(Shape):
-    def __init__(self):
+    def __init__(self, name: str = 'default'):
         super().__init__()
         self._collection: List[Shape] = []
+        self.name = name
 
     @property
     def empty(self):
@@ -307,7 +308,7 @@ class Group(Shape):
     def __getitem__(self, index) -> Shape:
         return self._collection[index]
 
-    def _local_normal_at(self, point: Point) -> Vector:
+    def _local_normal_at(self, point: Point, hit: Intersection = None) -> Vector:
         raise NotImplementedError
 
     def _local_intersect(self, ray: Ray) -> Intersections:
@@ -390,9 +391,9 @@ class Triangle(Shape):
             return Intersections()
 
         t = f * dot(self.e2, origin_cross_e1)
-        return Intersections(Intersection(t, self))
+        return Intersections(Intersection(t, self, u, v))
 
-    def _local_normal_at(self, point: Point) -> Vector:
+    def _local_normal_at(self, point: Point, hit: Intersection = None) -> Vector:
         return self.normal
 
     def bounds(self) -> BoundingBox:
@@ -401,4 +402,16 @@ class Triangle(Shape):
         box.include(self.p2)
         box.include(self.p3)
         return box
+
+
+class SmoothTriangle(Triangle):
+    def __init__(self, p1: Point, p2: Point, p3: Point, n1: Vector, n2: Vector, n3: Vector):
+        super().__init__(p1, p2, p3)
+        self.n1 = n1
+        self.n2 = n2
+        self.n3 = n3
+
+    def _local_normal_at(self, point: Point, hit: Intersection = None) -> Vector:
+        x, y, z, _ = self.n2 * hit.u + self.n3 * hit.v + self.n1 * (1 - hit.u - hit.v)
+        return Vector(x, y, z)
 

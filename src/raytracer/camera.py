@@ -48,6 +48,7 @@ class Camera:
     def render(self, world: World) -> Canvas:
         image = Canvas(self.hsize, self.vsize)
 
+        print('Rendering...')
         start = time.perf_counter()
         for y in range(self.vsize):
             for x in range(self.hsize):

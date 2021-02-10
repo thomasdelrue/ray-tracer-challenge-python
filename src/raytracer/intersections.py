@@ -86,14 +86,16 @@ class Intersections:
 
 
 class Intersection:
-    def __init__(self, t: float, _object: object):
+    def __init__(self, t: float, _object: object, u: float = None, v: float = None):
         self.t = t
         self.object = _object
+        self.u = u
+        self.v = v
 
     def prepare_computations(self, ray: Ray, xs: Intersections = Intersections()) -> Computations:
         point = ray.position(self.t)
         eyev = -ray.direction
-        normalv = self.object.normal_at(point)
+        normalv = self.object.normal_at(point, self)
         reflectv = ray.direction.reflect(normalv)
 
         containers = []

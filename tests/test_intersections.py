@@ -4,7 +4,7 @@ from raytracer import EPSILON
 from raytracer.intersections import Intersection, Intersections
 from raytracer.matrices import translation, scaling
 from raytracer.rays import Ray
-from raytracer.shapes import Sphere, Plane, Cube
+from raytracer.shapes import Sphere, Plane, Cube, Triangle
 from raytracer.tuples import Point, Vector
 
 
@@ -191,6 +191,8 @@ class TestIntersections:
         xs = c._local_intersect(r)
         assert xs.count == 0
 
-
-
-
+    def test_intersection_can_encapsulate_u_and_v(self):
+        s = Triangle(Point(0, 1, 0), Point(-1, 0, 0), Point(1, 0, 0))
+        i = Intersection(3.5, s, 0.2, 0.4)
+        assert i.u == 0.2
+        assert i.v == 0.4

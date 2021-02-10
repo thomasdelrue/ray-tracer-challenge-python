@@ -17,7 +17,7 @@ def test_shape():
             self.saved_ray = ray
             return Intersections()
 
-        def _local_normal_at(self, point: Point) -> Vector:
+        def _local_normal_at(self, point: Point, hit: Intersection = None) -> Vector:
             return Vector(point.x, point.y, point.z)
 
         def bounds(self) -> BoundingBox:
@@ -681,3 +681,42 @@ class TestTriangles:
         xs = t._local_intersect(r)
         assert xs.count == 1
         assert xs[0].t == 2
+
+
+def smooth_triangle():
+    p1, p2, p3 = Point(0, 1, 0), Point(-1, 0, 0), Point(1, 0, 0)
+    n1, n2, n3 = Vector(0, 1, 0), Vector(-1, 0, 0), Vector(1, 0, 0)
+    return SmoothTriangle(p1, p2, p3, n1, n2, n3)
+
+
+class TestSmoothTriangles:
+    def test_constructing_smooth_triangle(self):
+        t = smooth_triangle()
+        assert t.p1 == Point(0, 1, 0)
+        assert t.p2 == Point(-1, 0, 0)
+        assert t.p3 == Point(1, 0, 0)
+        assert t.n1 == Vector(0, 1, 0)
+        assert t.n2 == Vector(-1, 0, 0)
+        assert t.n3 == Vector(1, 0, 0)
+
+    def test_intersection_with_smooth_triangle_stores_u_and_v(self):
+        t = smooth_triangle()
+        r = Ray(Point(-0.2, 0.3, -2), Vector(0, 0, 1))
+        xs = t._local_intersect(r)
+        assert xs[0].u == pytest.approx(0.45, EPSILON)
+        assert xs[0].v == pytest.approx(0.25, EPSILON)
+
+    def test_smooth_triangle_uses_u_v_to_interpolate_the_normal(self):
+        t = smooth_triangle()
+        i = Intersection(1, t, 0.45, 0.25)
+        n = t.normal_at(Point(0, 0, 0), i)
+        assert n == Vector(-0.5547, 0.83205, 0)
+
+    def test_preparing_normal_on_smooth_triangle(self):
+        t = smooth_triangle()
+        x = Intersection(1, t, 0.45, 0.25)
+        r = Ray(Point(-0.2, 0.3, -2), Vector(0, 0, 1))
+        xs = Intersections(x)
+        comps = x.prepare_computations(r, xs)
+        assert comps.normalv == Vector(-0.5547, 0.83205, 0)
+
